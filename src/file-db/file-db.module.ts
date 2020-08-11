@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
-import { FileDbService } from './file-db.service';
+import { Module } from "@nestjs/common";
+import { FileDbService } from "./file-db.service";
+import { ConfigModule } from "@nestjs/config";
 
-@Module({
-  providers: [FileDbService]
+@Module({imports:[ConfigModule],
+  providers: [FileDbService],
+  exports: [FileDbService],
 })
 export class FileDbModule {}

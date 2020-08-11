@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from "@nestjs/common";
 import { existsSync, mkdirSync, promises } from "fs";
 const { readFile, writeFile, opendir } = promises;
 import { join, resolve } from "path";
 import { ChatLinks } from "./chat-links.interface";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class FileDbService {
-    
-  private readonly path = resolve("./", "chats");
+  constructor(private config: ConfigService) {}
+  private readonly path = resolve(this.config.get<string>("CHATS_DATA_DIR"));
 
   async getChatsIds(): Promise<number[]> {
     const path = this.path;
