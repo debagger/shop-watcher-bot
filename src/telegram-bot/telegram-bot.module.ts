@@ -5,7 +5,8 @@ import { ChatDataModule } from 'src/chat-data/chat-data.module';
 import { SiteCrawlerModule } from 'src/site-crawler/site-crawler.module';
 
 @Module({imports:[ConfigModule, ChatDataModule, SiteCrawlerModule],
-  providers: [TelegramBotService]
+  providers: [TelegramBotService],
+  exports:[TelegramBotService]
 })
 export class TelegramBotModule {
  

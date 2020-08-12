@@ -218,9 +218,12 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
     await bot.launch();
     console.log("Bot started");
+    return bot;
   }
 
+  public botInstance: Telegraf<Context>;
+
   public async onModuleInit() {
-    await this.botInit();
+    this.botInstance = await this.botInit();
   }
 }
