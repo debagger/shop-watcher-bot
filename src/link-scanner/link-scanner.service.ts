@@ -1,10 +1,11 @@
-import { Injectable, OnModuleInit, OnApplicationBootstrap } from "@nestjs/common";
+import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import { Telegram } from "telegraf";
 import { SiteCrawlerService } from "src/site-crawler/site-crawler.service";
 import { ChatDataService } from "src/chat-data/chat-data.service";
-import { SiteCrawlerModule } from "src/site-crawler/site-crawler.module";
 import { TelegramBotService } from "src/telegram-bot/telegram-bot.service";
 import { Link } from "src/file-db/chat-links.interface";
+import { EventBus } from "@nestjs/cqrs";
+import { NewSizeExist } from "./new-size-exist.event";
 
 const sleep = (timeout: number) =>
   new Promise((resolve) => setTimeout(resolve, timeout));
@@ -14,16 +15,12 @@ export class LinkScannerService implements OnApplicationBootstrap {
   constructor(
     private Chat: ChatDataService,
     private spider: SiteCrawlerService,
-    private bot: TelegramBotService
-  ) {
-    
-  }
+    private eventBus: EventBus
+  ) {}
 
-  private telegram: Telegram;
 
-  async onApplicationBootstrap(){
-    await this.runCheckAll()
-    this.telegram = this.bot.botInstance.telegram;
+  async onApplicationBootstrap() {
+    await this.runCheckAll();
   }
 
   async runCheckAll() {
@@ -60,10 +57,7 @@ export class LinkScannerService implements OnApplicationBootstrap {
     }
   }
 
-  async checkLink(
-    link: string,
-    chatId: number
-  ) {
+  async checkLink(link: string, chatId: number) {
     const newData = await this.spider.getData(link);
     console.log(newData.name);
     const chat = await this.Chat.getChat(chatId);
@@ -88,11 +82,7 @@ export class LinkScannerService implements OnApplicationBootstrap {
           )
           .map((s) => s.size);
         if (sizeExist.length > 0) {
-          await this.telegram.sendMessage(chatId, link);
-          await this.telegram.sendMessage(
-            chatId,
-            `Есть размеры: ${sizeExist.join(", ")}`
-          );
+          this.eventBus.publish(new NewSizeExist(chatId, link, sizeExist));
         }
       }
       linkData.lastCheckResult = newData;

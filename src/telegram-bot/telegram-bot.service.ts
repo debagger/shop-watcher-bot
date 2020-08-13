@@ -6,14 +6,25 @@ import { Link } from "src/file-db/chat-links.interface";
 import { SiteCrawlerService } from "src/site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { CallbackButton } from "telegraf/typings/markup";
+import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
+import { NewSizeExist } from "src/link-scanner/new-size-exist.event";
 
 @Injectable()
-export class TelegramBotService implements OnModuleInit {
+@EventsHandler(NewSizeExist)
+export class TelegramBotService
+  implements OnModuleInit, IEventHandler<NewSizeExist> {
   constructor(
     private config: ConfigService,
-    private Chat: ChatDataService,
+    private chat: ChatDataService,
     private spider: SiteCrawlerService
   ) {}
+
+  async handle(event: NewSizeExist) {
+    const { telegram } = this.botInstance;
+    const { chatId, link, newSizes } = event;
+    await telegram.sendMessage(chatId, link);
+    await telegram.sendMessage(chatId, `Есть размеры: ${newSizes.join(", ")}`);
+  }
 
   private readonly API_KEY = this.config.get<string>("TELEGRAM_BOT_API_KEY");
 
@@ -40,7 +51,7 @@ export class TelegramBotService implements OnModuleInit {
       if (!message.text) return;
       const text = message.text;
       const chatId = message.chat.id;
-      const chat = await this.Chat.getChat(chatId);
+      const chat = await this.chat.getChat(chatId);
 
       const link = text.split("?")[0];
       const links = chat.links;
@@ -85,7 +96,7 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
     bot.action(/size:(.+)/, async (ctx) => {
       if (!ctx.chat) return;
       if (!ctx.match) return;
-      const chat = await this.Chat.getChat(ctx.chat.id);
+      const chat = await this.chat.getChat(ctx.chat.id);
       const selectedSize = ctx.match[1];
       const links = chat.links;
       if (links.lastLink) {
@@ -111,7 +122,7 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
     bot.hears("Показать все", async (ctx) => {
       if (!ctx.chat) return;
-      const chat = await this.Chat.getChat(ctx.chat.id);
+      const chat = await this.chat.getChat(ctx.chat.id);
       const links = chat.links;
       const zaraLinks = Object.keys(links).filter((i) =>
         i.startsWith("https://www.zara.com/")
@@ -146,7 +157,7 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
     bot.action(/delete:(.+)/, async (ctx) => {
       if (!ctx.chat) return;
       if (!ctx.match) return;
-      const chat = await this.Chat.getChat(ctx.chat.id);
+      const chat = await this.chat.getChat(ctx.chat.id);
       const links = chat.links;
       const md4 = ctx.match[1];
 
@@ -175,7 +186,7 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
       if (!ctx.chat) return;
       if (!ctx.match) return;
 
-      const chat = await this.Chat.getChat(ctx.chat.id);
+      const chat = await this.chat.getChat(ctx.chat.id);
       const links = chat.links;
       const md4 = ctx.match[1];
       const size = ctx.match[2];
