@@ -10,7 +10,7 @@ export class ChatDataService {
   public async getChat(chatId: number) {
     if (!this.chats[chatId]) {
       this.chats[chatId] = new Chat(chatId, this.db);
-      this.chats[chatId].links = await this.db.getChatLinks(chatId);
+      await this.chats[chatId].load()
     }
     return this.chats[chatId];
   }

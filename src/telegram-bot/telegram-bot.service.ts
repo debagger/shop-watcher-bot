@@ -71,8 +71,6 @@ export class TelegramBotService
 
         linkData.lastCheckResult = res;
 
-        await chat.save();
-
         const msg = `
 Размерный ряд: 
 ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
@@ -87,7 +85,6 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
         ctx.reply(msg, keyboard);
         links.lastLink = link;
-        await chat.save();
       } else {
         ctx.reply("Не могу проверить размеры, что-то пошло не так");
       }
@@ -110,7 +107,6 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
           }
           curLink.trackFor.push(foundSize.size);
           curLink.trackFor = Array.from(new Set(curLink.trackFor));
-          await chat.save();
           return await ctx.reply(
             `ОК. Я буду следить за ${curLink.trackFor.join(", ")}`
           );
@@ -171,7 +167,6 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
       if (link && chat.links[link]) {
         delete chat.links[link];
-        await chat.save();
         try {
           await ctx.answerCbQuery(`Удалил`);
         } catch (err) {}
@@ -217,8 +212,6 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
       } else {
         linkData.trackFor = trackSizes.filter((i) => i !== size);
       }
-
-      await chat.save();
 
       try {
         await ctx.answerCbQuery(`Удалил`);

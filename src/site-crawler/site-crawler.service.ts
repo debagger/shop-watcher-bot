@@ -16,11 +16,10 @@ export class SiteCrawlerService implements OnModuleDestroy {
     });
   }
 
-  private browser: Browser | undefined;
+  private browser: Browser;
 
   async getData(path: string): Promise<LinkCheckResult> {
     if (!(this.browser && this.browser.isConnected())) await this.init();
-    if (!this.browser) throw new Error("Browser didn init");
 
     const page = await this.browser.newPage();
     await page.setViewport({ height: 1080, width: 1920 });
