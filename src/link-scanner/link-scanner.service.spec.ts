@@ -1,7 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { LinkScannerService } from "./link-scanner.service";
-import { ChatDataModule } from "../chat-data/chat-data.module";
-import { SiteCrawlerModule } from "../site-crawler/site-crawler.module";
 import { LinkGenerator } from "./link-generator.provider";
 import { CqrsModule, EventBus } from "@nestjs/cqrs";
 import { ChatDataService } from "../chat-data/chat-data.service";
@@ -9,22 +7,19 @@ import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { NewSizeExist } from "./new-size-exist.event";
 
 describe("LinkScannerService", () => {
-  let service: LinkScannerService;
-  let eventBus: EventBus;
   const getChatDataServiceMock = () => {
     return {
       getChatIds() {
-        console.log("getChatIds");
         return Promise.resolve([1]);
       },
-      links: {
+      chat: {
         links: {
           "https://www.zara.com/ru/ru/1.html": {
             lastCheckResult: {
               name: "1",
               sizes: [
-                { size: "XS", disabled: false },
                 { size: "XL", disabled: true },
+                { size: "XS", disabled: false },
               ],
             },
             trackFor: ["XL", "XS"],
@@ -32,35 +27,41 @@ describe("LinkScannerService", () => {
         },
       },
       getChat() {
-        console.log("getChat");
-        return this.links;
+        return Promise.resolve(this.chat);
       },
     };
   };
 
   const getSiteCrawlerServiceMock = () => {
     return {
-      getData: (...args) => {
-        console.log("GetData", args);
+      sizes: [
+        { size: "XL", disabled: false },
+        { size: "XS", disabled: false },
+      ],
+      getData(link) {
         return Promise.resolve({
           name: "1",
-          sizes: [
-            { size: "XL", disabled: false },
-            { size: "XS", disabled: false },
-          ],
+          sizes: this.sizes,
         });
       },
     };
   };
 
+  let service: LinkScannerService;
+  let eventBus: EventBus;
+  let chatDataServiceMock: ReturnType<typeof getChatDataServiceMock>;
+  let siteCrawlerServiceMock: ReturnType<typeof getSiteCrawlerServiceMock>;
+
   beforeEach(async () => {
+    chatDataServiceMock = getChatDataServiceMock();
+    siteCrawlerServiceMock = getSiteCrawlerServiceMock();
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [
         LinkScannerService,
         LinkGenerator,
-        { provide: ChatDataService, useFactory: getChatDataServiceMock },
-        { provide: SiteCrawlerService, useFactory: getSiteCrawlerServiceMock },
+        { provide: ChatDataService, useValue: chatDataServiceMock },
+        { provide: SiteCrawlerService, useValue: siteCrawlerServiceMock },
       ],
     }).compile();
 
@@ -72,15 +73,62 @@ describe("LinkScannerService", () => {
     expect(service).toBeDefined();
   });
 
-  it("should return new size", async () => {
-    jest.spyOn(eventBus, "publish").mockImplementation((e) => {
-      console.log(e);
-      expect(e).toEqual(<NewSizeExist>{
-        chatId: 1,
-        link: "https://www.zara.com/ru/ru/1.html",
-        newSizes: ["XL"],
-      });
+  it("should return new size exist", async () => {
+    let event: NewSizeExist;
+    jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
+      event = e;
     });
     await service.checkLink("https://www.zara.com/ru/ru/1.html", 1);
+
+    expect(event).toEqual(<NewSizeExist>{
+      chatId: 1,
+      link: "https://www.zara.com/ru/ru/1.html",
+      newSizes: ["XL"],
+    });
+
+    expect(siteCrawlerServiceMock.sizes).toEqual(
+      chatDataServiceMock.chat.links["https://www.zara.com/ru/ru/1.html"]
+        .lastCheckResult.sizes
+    );
+  });
+
+  it("should return new size exist 1", async () => {
+    chatDataServiceMock.chat.links[
+      "https://www.zara.com/ru/ru/1.html"
+    ].lastCheckResult.sizes = [
+      { size: "S", disabled: false },
+      { size: "L", disabled: true },
+      { size: "XL", disabled: true },
+      { size: "XS", disabled: true },
+    ];
+    
+    chatDataServiceMock.chat.links[
+      "https://www.zara.com/ru/ru/1.html"
+    ].trackFor = ["XL", "XS", "M"];
+
+    siteCrawlerServiceMock.sizes = [
+      { size: "M", disabled: false },
+      { size: "S", disabled: true },
+      { size: "L", disabled: false },
+      { size: "XL", disabled: false },
+      { size: "XS", disabled: false },
+    ];
+
+    let event: NewSizeExist;
+    jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
+      event = e;
+    });
+    await service.checkLink("https://www.zara.com/ru/ru/1.html", 1);
+
+    expect(event).toEqual(<NewSizeExist>{
+      chatId: 1,
+      link: "https://www.zara.com/ru/ru/1.html",
+      newSizes: ["M", "XL", "XS"],
+    });
+
+    expect(siteCrawlerServiceMock.sizes).toEqual(
+      chatDataServiceMock.chat.links["https://www.zara.com/ru/ru/1.html"]
+        .lastCheckResult.sizes
+    );
   });
 });
