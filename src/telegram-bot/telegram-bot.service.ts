@@ -33,15 +33,18 @@ export class TelegramBotService
    */
   public async botInit() {
     const bot = new Telegraf(this.API_KEY);
+    const keyboard = Markup.keyboard(["Показать все"]).resize().extra();
     bot.start((ctx) =>
       ctx.reply(
-        "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже."
+        "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
+        keyboard
       )
     );
 
     bot.help((ctx) =>
       ctx.reply(
-        "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже."
+        "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
+        keyboard
       )
     );
 
