@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
-import { SiteCrawlerService } from "src/site-crawler/site-crawler.service";
-import { ChatDataService } from "src/chat-data/chat-data.service";
-import { Link, LinkCheckResult } from "src/file-db/chat-links.interface";
+import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
+import { ChatDataService } from "../chat-data/chat-data.service";
+import { Link, LinkCheckResult } from "../file-db/chat-links.interface";
 import { EventBus } from "@nestjs/cqrs";
 import { NewSizeExist } from "./new-size-exist.event";
 import { LinkGenerator } from "./link-generator.provider";

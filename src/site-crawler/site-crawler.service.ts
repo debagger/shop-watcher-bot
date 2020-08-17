@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy } from "@nestjs/common";
 import { launch, Browser } from "puppeteer";
-import { LinkCheckResult, Size } from "src/file-db/chat-links.interface";
+import { LinkCheckResult, Size } from "../file-db/chat-links.interface";
 
 @Injectable()
 export class SiteCrawlerService implements OnModuleDestroy {

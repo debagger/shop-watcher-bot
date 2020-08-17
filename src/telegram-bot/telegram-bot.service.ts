@@ -1,13 +1,13 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
-import { ChatDataService } from "src/chat-data/chat-data.service";
-import { Link } from "src/file-db/chat-links.interface";
-import { SiteCrawlerService } from "src/site-crawler/site-crawler.service";
+import { ChatDataService } from "../chat-data/chat-data.service";
+import { Link } from "../file-db/chat-links.interface";
+import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { CallbackButton } from "telegraf/typings/markup";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
-import { NewSizeExist } from "src/link-scanner/new-size-exist.event";
+import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 
 @Injectable()
 @EventsHandler(NewSizeExist)

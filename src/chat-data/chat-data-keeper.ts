@@ -16,12 +16,14 @@ export class Chat {
 
   private lastSave: Promise<void> = Promise.resolve();
 
+  private readonly proxyHandlers = {
+    get: this.getHandler.bind(this),
+    set: this.setHandler.bind(this),
+    deleteProperty: this.deleteHandler.bind(this),
+  };
+
   private proxify<T extends Object>(obj: T) {
-    return new Proxy<T>(obj, {
-      get: this.getHandler.bind(this),
-      set: this.setHandler.bind(this),
-      deleteProperty: this.deleteHandler.bind(this),
-    });
+    return new Proxy<T>(obj, this.proxyHandlers);
   }
 
   private deleteHandler(target: any, key: string | number | symbol) {

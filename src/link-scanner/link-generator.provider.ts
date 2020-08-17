@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { ChatDataService } from "src/chat-data/chat-data.service";
+import { ChatDataService } from "../chat-data/chat-data.service";
 
 const sleep = (timeout: number) =>
   new Promise((resolve) => setTimeout(resolve, timeout));
