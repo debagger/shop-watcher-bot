@@ -8,6 +8,7 @@ import { createHash } from "crypto";
 import { CallbackButton } from "telegraf/typings/markup";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
+import { AuthService } from "../auth/auth.service";
 
 @Injectable()
 @EventsHandler(NewSizeExist)
@@ -16,7 +17,8 @@ export class TelegramBotService
   constructor(
     private config: ConfigService,
     private chat: ChatDataService,
-    private spider: SiteCrawlerService
+    private spider: SiteCrawlerService,
+    private authService:AuthService
   ) {}
 
   async handle(event: NewSizeExist) {
@@ -43,7 +45,7 @@ export class TelegramBotService
 
     bot.help((ctx) =>
       ctx.reply(
-        "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
+        `http://localhost:3000/auth/login?token=${this.authService.encodePayload(JSON.stringify({user: ctx.from, chat: ctx.chat}))}`,
         keyboard
       )
     );
