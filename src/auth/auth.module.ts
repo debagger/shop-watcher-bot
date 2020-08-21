@@ -4,11 +4,13 @@ import { AuthController } from "./auth.controller";
 import { PassportModule } from "@nestjs/passport";
 import { JwtModule } from "@nestjs/jwt";
 import * as dotenv from "dotenv"
+import { ConfigModule } from "@nestjs/config";
+import { JwtStrategy } from "./jwt.strategy";
 
 dotenv.config()
 
 @Module({
-  imports: [
+  imports: [ConfigModule,
     PassportModule,
     JwtModule.register({
       secret: (() => {
@@ -16,7 +18,7 @@ dotenv.config()
       })(),
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [AuthService],
 })

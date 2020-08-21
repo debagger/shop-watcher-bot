@@ -8,9 +8,10 @@ import { ChatDataModule } from './chat-data/chat-data.module';
 import { SiteCrawlerModule } from './site-crawler/site-crawler.module';
 import { LinkScannerModule } from './link-scanner/link-scanner.module';
 import { AuthModule } from './auth/auth.module';
+import { UserLinksModule } from './user-links/user-links.module';
 
 @Module({
-  imports: [TelegramBotModule, ConfigModule.forRoot(), FileDbModule, ChatDataModule, SiteCrawlerModule, LinkScannerModule, AuthModule],
+  imports: [TelegramBotModule, ConfigModule.forRoot(), FileDbModule, ChatDataModule, SiteCrawlerModule, LinkScannerModule, AuthModule, UserLinksModule],
   controllers: [AppController],
   providers: [AppService],
 })
