@@ -7,7 +7,8 @@ import * as cookie from "cookie-parser"
 async function bootstrap() {
   dotenv.config();
   const app = await NestFactory.create(AppModule);
-  app.getHttpAdapter().use(cookie())
+  const adapter = app.getHttpAdapter();
+  adapter.use(cookie())
   await app.listen(3000);
 }
 bootstrap();

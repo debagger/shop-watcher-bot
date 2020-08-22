@@ -9,6 +9,7 @@ import { CallbackButton } from "telegraf/typings/markup";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 import { AuthService } from "../auth/auth.service";
+import { kStringMaxLength } from "buffer";
 
 @Injectable()
 @EventsHandler(NewSizeExist)
@@ -18,7 +19,7 @@ export class TelegramBotService
     private config: ConfigService,
     private chat: ChatDataService,
     private spider: SiteCrawlerService,
-    private authService:AuthService
+    private authService: AuthService
   ) {}
 
   async handle(event: NewSizeExist) {
@@ -35,7 +36,9 @@ export class TelegramBotService
    */
   public async botInit() {
     const bot = new Telegraf(this.API_KEY);
-    const keyboard = Markup.keyboard(["Показать все"]).resize().extra();
+    const keyboard = Markup.keyboard(["Показать все"])
+      .resize()
+      .extra();
     bot.start((ctx) =>
       ctx.reply(
         "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
@@ -43,12 +46,20 @@ export class TelegramBotService
       )
     );
 
-    bot.help((ctx) =>
-      ctx.reply(
-        `http://localhost:3000/auth/login?token=${this.authService.encodePayload(JSON.stringify({user: ctx.from, chat: ctx.chat}))}`,
+    bot.help(async (ctx) => {
+      await ctx.reply(
+        `http://localhost:3000/auth/login?token=${this.authService.encodePayload(
+          JSON.stringify({ user: ctx.from, chat: ctx.chat })
+        )}`,
         keyboard
-      )
-    );
+      );
+      const key = this.authService.encodePayload(
+        JSON.stringify({ user: ctx.from, chat: ctx.chat })
+      );
+      ctx.replyWithMarkdown(
+        `Это сайт, на котором вы можете посмотреть ссылки [Сайт](http://debagger.ru:3000/auth/login?key=${key})`
+      );
+    });
 
     bot.hears(/https:\/\/www.zara.com\//, async (ctx) => {
       if (!ctx.message) return;
