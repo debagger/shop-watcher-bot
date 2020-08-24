@@ -9,7 +9,6 @@
               <b-card-header class="p-0">
                 <b-button
                   block
-                  size="sm"
                   @click="toggleVisibility(linkData)"
                   class="m-0"
                 >{{linkData.lastCheckResult.name}}</b-button>
@@ -19,14 +18,22 @@
                   <b-container fluid>
                     <b-row>
                       <b-col
+                        xl="3"
+                        md="6"
+                        class="mb-1 px-2"
                         v-for="size in linkData.lastCheckResult.sizes"
                         :key="index + size.size"
                       >
-                        <b-card no-body  :bg-variant="size.disabled?'danger':'success'">
-                          <b-card-header>{{size.size}}</b-card-header>
-                          <b-card-body>
-                            <b-form-checkbox :checked="linkData.trackFor.includes(size.size)"></b-form-checkbox>
-                          </b-card-body>
+                        <b-card
+                          no-body
+                          :class="size.disabled?'p-2 bg-danger text-white':'p-2 bg-success text-white'"
+                        >
+                          <b-row no-gutters>
+                            <b-col cols="10" class="align-middle">{{size.size}}</b-col>
+                            <b-col cols="2" class="text-right align-middle">
+                              <b-form-checkbox :checked="linkData.trackFor.includes(size.size)"></b-form-checkbox>
+                            </b-col>
+                          </b-row>
                         </b-card>
                       </b-col>
                     </b-row>
