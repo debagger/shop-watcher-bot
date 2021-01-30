@@ -27,25 +27,21 @@ export class SiteCrawlerService implements OnModuleDestroy {
     try {
       const name = await page.evaluate(() => {
         const productName = document.querySelector<HTMLElement>(
-          ".product-name"
+          ".product-detail-info__name"
         );
-        if (productName) {
-          return productName.innerText.replace("\nПОДРОБНАЯ ИНФОРМАЦИЯ", "");
-        }
-        return "";
+        return productName.innerText;
       });
 
       const sizes: Size[] = await page.evaluate(() => {
-        const productSize = document.querySelectorAll<HTMLElement>(
-          ".product-size"
+        const productSize = document.querySelector<HTMLElement>(
+          ".product-size-selector__size-list"
         );
         if (productSize) {
-          return Array.from(productSize)
-            .filter((i: HTMLElement) => i.dataset)
+          return Array.from(productSize.children)
             .map((i: HTMLElement) => {
               return {
-                size: i.dataset.name ? i.dataset.name : "",
-                disabled: !(i.className.search("disabled") < 0),
+                size: i.innerText,
+                disabled: !!((<any>i.attributes).disabled),
               };
             });
         } else {
