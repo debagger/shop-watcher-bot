@@ -1,0 +1,7 @@
+version: "2.1"
+services:
+    chromium:
+      image: browserless/chrome
+      container_name: chromium
+      ports: 
+        - 3000:3000

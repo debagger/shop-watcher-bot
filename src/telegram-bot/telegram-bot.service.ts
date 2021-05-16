@@ -9,7 +9,6 @@ import { CallbackButton } from "telegraf/typings/markup";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 import { AuthService } from "../auth/auth.service";
-import { kStringMaxLength } from "buffer";
 
 @Injectable()
 @EventsHandler(NewSizeExist)

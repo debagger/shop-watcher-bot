@@ -9,10 +9,19 @@ import { SiteCrawlerModule } from './site-crawler/site-crawler.module';
 import { LinkScannerModule } from './link-scanner/link-scanner.module';
 import { AuthModule } from './auth/auth.module';
 import { UserLinksModule } from './user-links/user-links.module';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
-  imports: [TelegramBotModule, ConfigModule.forRoot(), FileDbModule, ChatDataModule, SiteCrawlerModule, LinkScannerModule, AuthModule, UserLinksModule],
+  imports: [LoggerModule.forRoot(),
+    TelegramBotModule,
+  ConfigModule.forRoot(),
+    FileDbModule,
+    ChatDataModule,
+    SiteCrawlerModule,
+    LinkScannerModule,
+    AuthModule,
+    UserLinksModule],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
