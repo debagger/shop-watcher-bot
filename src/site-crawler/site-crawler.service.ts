@@ -29,13 +29,13 @@ export class SiteCrawlerService {
 
       const sizes: Size[] = await page.evaluate(() => {
         const productSize = document.querySelector<HTMLElement>(
-          ".product-size-selector__size-list"
+          ".product-detail-size-selector__size-list"
         );
         if (productSize) {
           return Array.from(productSize.children)
             .map((i: HTMLElement) => {
               return {
-                size: i.innerText,
+                size: i.querySelector<HTMLElement>(".product-detail-size-info__main-label").innerText,
                 disabled: !!((<any>i.attributes).disabled),
               };
             });

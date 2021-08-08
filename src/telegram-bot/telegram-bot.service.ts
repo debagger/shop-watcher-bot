@@ -5,7 +5,6 @@ import { ChatDataService } from "../chat-data/chat-data.service";
 import { Link } from "../file-db/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
-import { CallbackButton } from "telegraf/typings/markup";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 import { AuthService } from "../auth/auth.service";
@@ -36,8 +35,7 @@ export class TelegramBotService
   public async botInit() {
     const bot = new Telegraf(this.API_KEY);
     const keyboard = Markup.keyboard(["Показать все"])
-      .resize()
-      .extra();
+      .resize();
     bot.start((ctx) =>
       ctx.reply(
         "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
@@ -91,13 +89,8 @@ export class TelegramBotService
 ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 Напишите за каким следить?
     `;
-
-        const keyboard = Markup.inlineKeyboard(
-          res.sizes.map((i) => Markup.callbackButton(i.size, "size:" + i.size))
-        )
-          .resize()
-          .extra();
-
+        const buttons = res.sizes.map((i) => Markup.button.callback(i.size, "size:" + i.size));
+        const keyboard = Markup.inlineKeyboard(buttons);
         ctx.reply(msg, keyboard);
         links.lastLink = link;
       } else {
@@ -133,6 +126,7 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
     bot.hears("Показать все", async (ctx) => {
       if (!ctx.chat) return;
+      ctx.chat.type
       const chat = await this.chat.getChat(ctx.chat.id);
       const links = chat.links;
       const zaraLinks = Object.keys(links).filter((i) =>
@@ -146,21 +140,18 @@ ${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
         const md4 = createHash("md4")
           .update(link)
           .digest("hex");
-        let buttons: CallbackButton[] | CallbackButton[][] = [
-          Markup.callbackButton("Удалить ❌", "delete:" + md4),
-        ];
+        const deleteButton = 
+          Markup.button.callback("Удалить ❌", "delete:" + md4);
         const linkData = links[link] as Link;
+        const buttons = [[deleteButton]];
         if (linkData.trackFor) {
-          buttons = [
-            buttons,
+          buttons.push(
             linkData.trackFor.map((i) =>
-              Markup.callbackButton(`❌ ${i}`, `deleteSize:${md4}:[${i}]`)
+              Markup.button.callback(`❌ ${i}`, `deleteSize:${md4}:[${i}]`)
             ),
-          ];
+          );
         }
-        const keyboard = Markup.inlineKeyboard(buttons)
-          .resize()
-          .extra();
+        const keyboard = Markup.inlineKeyboard(buttons);
         await ctx.reply(link, keyboard);
       }
     });

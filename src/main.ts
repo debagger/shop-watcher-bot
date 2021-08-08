@@ -12,6 +12,6 @@ async function bootstrap() {
   const adapter = app.getHttpAdapter();
   adapter.use(cookie())
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();
