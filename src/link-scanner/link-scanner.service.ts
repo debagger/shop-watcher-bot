@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from "@nestjs/common";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { Link, LinkCheckResult } from "../file-db/chat-links.interface";
+import { Link, LinkCheckResultSimple } from "../file-db/chat-links.interface";
 import { EventBus } from "@nestjs/cqrs";
 import { NewSizeExist } from "./new-size-exist.event";
 import { LinkGenerator } from "./link-generator.provider";
@@ -40,13 +40,15 @@ export class LinkScannerService implements OnApplicationBootstrap {
     console.log(newData.name);
     const chat = await this.Chat.getChat(chatId);
     const links = chat.links;
-    if (newData) {
+    if (newData && newData.type==="simple") {
+      
       const linkData = links[link] as Link;
       if (
         linkData.lastCheckResult &&
         linkData.trackFor &&
         linkData.trackFor.length > 0
       ) {
+        
         const sizeExist = this.newSizes(linkData, newData);
         if (sizeExist.length > 0) {
           this.eventBus.publish(new NewSizeExist(chatId, link, sizeExist));
@@ -56,7 +58,7 @@ export class LinkScannerService implements OnApplicationBootstrap {
     }
   }
 
-  private newSizes(linkData: Link, newData: LinkCheckResult) {
+  private newSizes(linkData: Link, newData: LinkCheckResultSimple) {
     const oldSizeExist = linkData.lastCheckResult.sizes
       .filter((s) => linkData.trackFor?.includes(s.size) && !s.disabled)
       .map((s) => s.size);

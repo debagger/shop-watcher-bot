@@ -77,7 +77,7 @@ export class TelegramBotService
 
       const res = await this.spider.getData(link);
 
-      if (res && res.name && res.sizes.length > 0) {
+      if (res && res.type==='simple' && res.name && res.sizes.length > 0) {
         if (!links[link]) {
           links[link] = linkData;
         }

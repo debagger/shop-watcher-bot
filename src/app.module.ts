@@ -14,7 +14,7 @@ import { LoggerModule } from 'nestjs-pino';
 @Module({
   imports: [LoggerModule.forRoot(),
     TelegramBotModule,
-  ConfigModule.forRoot(),
+    ConfigModule.forRoot(),
     FileDbModule,
     ChatDataModule,
     SiteCrawlerModule,
