@@ -14,6 +14,29 @@ describe("LinkScannerService", () => {
       },
       chat: {
         links: {
+          "https://www.zara.com/ru/ru/mc.html": {
+            type: "multicolorLink",
+            lastCheckResult: {
+              name: "mc",
+              colors: [
+                {
+                  color: { name: "black" },
+                  sizes: [
+                    { size: "XL", disabled: true },
+                    { size: "XS", disabled: false },
+                  ]
+                },
+                {
+                  color: { name: "white" },
+                  sizes: [
+                    { size: "XL", disabled: false },
+                    { size: "XS", disabled: true },
+                  ]
+                },
+              ],
+            },
+            trackFor: [{ color: "black", size: "XL" }, { color: "black", size: "XS" }],
+          },
           "https://www.zara.com/ru/ru/1.html": {
             lastCheckResult: {
               name: "1",
@@ -39,10 +62,35 @@ describe("LinkScannerService", () => {
         { size: "XS", disabled: false },
       ],
       getData(link) {
-        return Promise.resolve({
+        if (link === "https://www.zara.com/ru/ru/mc.html")
+          return Promise.resolve({
+            type: "multicolors",
+            name: "mc",
+            colors: [
+              {
+                color: { name: "black" },
+                sizes: [
+                  { size: "XL", disabled: false },
+                  { size: "XS", disabled: false },
+                ]
+              },
+              {
+                color: { name: "white" },
+                sizes: [
+                  { size: "XL", disabled: false },
+                  { size: "XS", disabled: false },
+                ]
+              },
+            ],
+          });
+        if (link === "https://www.zara.com/ru/ru/1.html") return Promise.resolve({
+          type: "simple",
           name: "1",
-          sizes: this.sizes,
-        });
+          sizes: [
+            { size: "XL", disabled: false },
+            { size: "XS", disabled: false },
+          ],
+        })
       },
     };
   };
@@ -73,7 +121,7 @@ describe("LinkScannerService", () => {
     expect(service).toBeDefined();
   });
 
-  it("should return new size exist", async () => {
+  it("should return new size exist for simple page", async () => {
     let event: NewSizeExist;
     jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
       event = e;
@@ -85,50 +133,21 @@ describe("LinkScannerService", () => {
       link: "https://www.zara.com/ru/ru/1.html",
       newSizes: ["XL"],
     });
+  })
 
-    expect(siteCrawlerServiceMock.sizes).toEqual(
-      chatDataServiceMock.chat.links["https://www.zara.com/ru/ru/1.html"]
-        .lastCheckResult.sizes
-    );
-  });
-
-  it("should return new size exist 1", async () => {
-    chatDataServiceMock.chat.links[
-      "https://www.zara.com/ru/ru/1.html"
-    ].lastCheckResult.sizes = [
-      { size: "S", disabled: false },
-      { size: "L", disabled: true },
-      { size: "XL", disabled: true },
-      { size: "XS", disabled: true },
-    ];
-    
-    chatDataServiceMock.chat.links[
-      "https://www.zara.com/ru/ru/1.html"
-    ].trackFor = ["XL", "XS", "M"];
-
-    siteCrawlerServiceMock.sizes = [
-      { size: "M", disabled: false },
-      { size: "S", disabled: true },
-      { size: "L", disabled: false },
-      { size: "XL", disabled: false },
-      { size: "XS", disabled: false },
-    ];
-
+  it("should return new size exist for multicolor page", async () => {
     let event: NewSizeExist;
     jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
       event = e;
     });
-    await service.checkLink("https://www.zara.com/ru/ru/1.html", 1);
+    await service.checkLink("https://www.zara.com/ru/ru/mc.html", 1);
 
     expect(event).toEqual(<NewSizeExist>{
       chatId: 1,
-      link: "https://www.zara.com/ru/ru/1.html",
-      newSizes: ["M", "XL", "XS"],
+      link: "https://www.zara.com/ru/ru/mc.html",
+      newSizes: ["black: XL"],
     });
-
-    expect(siteCrawlerServiceMock.sizes).toEqual(
-      chatDataServiceMock.chat.links["https://www.zara.com/ru/ru/1.html"]
-        .lastCheckResult.sizes
-    );
   });
+
+  
 });

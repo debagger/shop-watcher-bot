@@ -28,8 +28,9 @@ export class FileDbService {
   async getChatLinks(chatId: Number): Promise<ChatLinks> {
     const path = join(this.path, `${chatId}`, "links.json");
     if (existsSync(path)) {
-      const json = await readFile(path, "utf8");
-      return JSON.parse(json.toString());
+      const fileContent = await readFile(path, "utf8");
+      const result = JSON.parse(fileContent.toString());
+      return result;
     }
     return {};
   }

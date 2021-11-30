@@ -24,13 +24,15 @@ describe('SiteCrawlerService', () => {
   })
   it('should extract multicolor page', async () => {
     const result = await service.getData('https://www.zara.com/ru/ru/%D0%B1%D1%80%D1%8E%D0%BA%D0%B8-%D1%81-%D0%B2%D1%8B%D1%81%D0%BE%D0%BA%D0%BE%D0%B9-%D0%BF%D0%BE%D1%81%D0%B0%D0%B4%D0%BA%D0%BE%D0%B9-p07901432.html?v1=120500928');
-    console.dir(result, {depth:4});
     expect(result).toHaveProperty("type", "multicolors")
     if (result.type === 'multicolors') {
 
       expect(result).toHaveProperty("name", "БРЮКИ С ВЫСОКОЙ ПОСАДКОЙ")
       expect(Array.isArray(result.colors)).not.toBeFalsy()
       expect(result.colors.length > 0).not.toBeFalsy()
+      for(let color of result.colors){
+        expect(color.sizes.length).toBeGreaterThan(0);
+      }
     }
   })
 });

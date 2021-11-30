@@ -6,6 +6,14 @@ export class Chat {
 
   async load() {
     this._links = await this.db.getChatLinks(this.chatId);
+
+    const keys = Object.keys(this._links).filter(key=>key.startsWith("https://www.zara.com"))
+
+    keys.forEach(key=>{
+      if((<any>this._links[key]).type) return
+      (<any>this._links[key]).type =  "simpleLink"
+    })
+
   }
   private _links: ChatLinks = {};
 
