@@ -10,9 +10,27 @@ import { LinkScannerModule } from './link-scanner/link-scanner.module';
 import { AuthModule } from './auth/auth.module';
 import { UserLinksModule } from './user-links/user-links.module';
 import { LoggerModule } from 'nestjs-pino';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ProxyListModule } from './proxy-list/proxy-list.module';
+import { ObjectStorageModule } from "./object-storage/object-storage.module";
+import * as Entities from './entities'
+ 
 
 @Module({
-  imports: [LoggerModule.forRoot(),
+  imports: [
+    ScheduleModule.forRoot(),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'postgres',
+      port: 5432,
+      username: 'user',
+      password: 'password',
+      database: 'bot',
+      entities: Object.values(Entities),
+      synchronize: true,
+    }),
+    LoggerModule.forRoot(),
     TelegramBotModule,
     ConfigModule.forRoot(),
     FileDbModule,
@@ -20,7 +38,9 @@ import { LoggerModule } from 'nestjs-pino';
     SiteCrawlerModule,
     LinkScannerModule,
     AuthModule,
-    UserLinksModule],
+    UserLinksModule,
+    ProxyListModule,
+    ObjectStorageModule],
   controllers: [AppController],
   providers: [AppService],
 })
