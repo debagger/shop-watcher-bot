@@ -14,6 +14,7 @@ export class ProxyListModule implements OnModuleInit {
     private proxyTester: ProxyTesterService){}
   async onModuleInit(){
     // await this.proxyUpdater.updateSource(1)
-    // await this.proxyTester.checkAllProxies()
+    await this.proxyUpdater.updateAllSources()
+     await this.proxyTester.checkAllProxies()
   }
  }

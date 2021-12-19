@@ -1,5 +1,6 @@
 import { ProxyTestResultType, ProxyTestType } from "./proxy-test.type";
 import { SocksClient, SocksClientOptions } from 'socks';
+import {performance} from 'perf_hooks'
 export const establishConnectionTest: ProxyTestType = async function ({ host, port, protocol }): Promise<ProxyTestResultType> {
 
     const type = protocol
@@ -15,14 +16,17 @@ export const establishConnectionTest: ProxyTestType = async function ({ host, po
         name: 'establishConnectionTest',
         host,
         port,
-        protocol
+        protocol,
+        duration_ms: null
     }
-
+    const start = performance.now()
     try {
         const info = await SocksClient.createConnection(options)
+        res.duration_ms = performance.now() - start
         res.okResult = { result: "OK" }
         info.socket.destroy()
     } catch (error) {
+        res.duration_ms = performance.now() - start
         res.errorResult = error
     }
 

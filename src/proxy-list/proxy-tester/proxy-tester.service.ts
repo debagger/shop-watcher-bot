@@ -24,8 +24,12 @@ export class ProxyTesterService {
         const { host, port } = testResult
         const testedProxy = await this.proxyListRepo.findOne({ host, port })
         if (!testedProxy) return
-        const { protocol, errorResult, okResult } = testResult
-        await this.proxyTestRunRepo.save({ testedProxy, protocol, errorResult, okResult, testType, runTime: new Date() })
+
+        const { protocol, errorResult, okResult, duration_ms } = testResult
+        if (errorResult) {
+            delete errorResult.stack
+        }
+        await this.proxyTestRunRepo.save({ testedProxy, protocol, errorResult, okResult, testType, runTime: new Date(), duration_ms })
     }
 
     async checkAllProxies() {

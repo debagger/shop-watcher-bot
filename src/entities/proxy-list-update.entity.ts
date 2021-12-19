@@ -7,7 +7,7 @@ export class ProxyListUpdate {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ type: 'timestamp with time zone' })
+    @Column({ type: 'datetime' })
     updateTime: Date
 
     @ManyToOne(() => ProxyListSource, (source) => source.updates)
@@ -17,7 +17,7 @@ export class ProxyListUpdate {
     @JoinTable()
     loadedProxies: Proxy[]
 
-    @Column('jsonb', { nullable: true })
+    @Column('json', { nullable: true })
     error?: Error | Error[]
 
 }

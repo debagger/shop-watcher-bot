@@ -7,6 +7,7 @@ export type ProxyTestResultType = {
     name: string,
     okResult?: any,
     errorResult?: any,
+    duration_ms: number
 }
 
 export type ProxyTestType = (args: ProxyTestArgs) => Promise<ProxyTestResultType>

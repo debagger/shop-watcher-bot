@@ -13,22 +13,24 @@ import { LoggerModule } from 'nestjs-pino';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ProxyListModule } from './proxy-list/proxy-list.module';
-import { ObjectStorageModule } from "./object-storage/object-storage.module";
 import * as Entities from './entities'
- 
+
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'postgres',
-      port: 5432,
-      username: 'user',
+      type: 'mysql',
+      host: 'perconaserver',
+      port: 3306,
+      username: 'root',
       password: 'password',
       database: 'bot',
       entities: Object.values(Entities),
       synchronize: true,
+      // maxQueryExecutionTime: 1000,
+      // logging: true,
+      // logger: "file"
     }),
     LoggerModule.forRoot(),
     TelegramBotModule,
@@ -39,8 +41,7 @@ import * as Entities from './entities'
     LinkScannerModule,
     AuthModule,
     UserLinksModule,
-    ProxyListModule,
-    ObjectStorageModule],
+    ProxyListModule],
   controllers: [AppController],
   providers: [AppService],
 })

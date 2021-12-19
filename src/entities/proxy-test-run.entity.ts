@@ -6,7 +6,7 @@ export class ProxyTestRun {
     @PrimaryGeneratedColumn()
     id: number
 
-    @Column({ type: 'timestamp with time zone' })
+    @Column({ type: 'datetime' })
     runTime: Date
 
     @Column('smallint')
@@ -18,10 +18,13 @@ export class ProxyTestRun {
     @ManyToOne(() => Proxy, proxy => proxy.testsRuns)
     testedProxy: Proxy
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({ type: 'json', nullable: true })
     okResult?: any
 
-    @Column({ type: 'jsonb', nullable: true })
+    @Column({ type: 'json', nullable: true })
     errorResult?: any
+
+    @Column({ type: "int" })
+    duration_ms: number
 
 }
