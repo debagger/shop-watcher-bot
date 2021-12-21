@@ -23,7 +23,7 @@ services:
       - "3001"
     labels:  
       - "traefik.enable=true"
-      - "traefik.http.routers.zarabot.rule=Host(`zara-bot.debagger.ru`)"
+      - "traefik.http.routers.zarabot.rule=Host(`${HOST}`)"
       - "traefik.http.routers.zarabot.tls=true"
       - "traefik.http.routers.zarabot.tls.certresolver=leresolver"
-      - "traefik.http.routers.zarabot.middlewares=traefik-forward-auth"
+      # - "traefik.http.routers.zarabot.middlewares=traefik-forward-auth"
