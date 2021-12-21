@@ -8,7 +8,13 @@ services:
   zarabot:
     image: node:16
     entrypoint: /bin/bash
-    command: -c 'git clone https://github.com/debagger/shop-watcher-bot.git; cd shop-watcher-bot && npm i && npm run start'
+    command: >
+      -c 
+      'git clone https://github.com/debagger/shop-watcher-bot.git; 
+      cd shop-watcher-bot && 
+      npm i && 
+      npm run build && 
+      npm run start:prod'
     volumes:
       - botdata:/bot-data
     container_name: zarabot
