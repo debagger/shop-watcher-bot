@@ -34,7 +34,6 @@ services:
     expose:
       - "3001"
     labels:
-      - "zara-bot.testlabel=1"  
       - "traefik.enable=true"
       - "traefik.http.routers.zarabot.rule=Host(`${HOST}`)"
       - "traefik.http.routers.zarabot.tls=true"
