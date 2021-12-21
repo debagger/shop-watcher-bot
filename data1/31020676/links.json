@@ -1,0 +1,231 @@
+{
+ "lastLink": "https://www.zara.com/ru/ru/%D0%BA%D1%83%D1%80%D1%82%D0%BA%D0%B0-%D1%81-%D0%BA%D0%B0%D0%BF%D1%8E%D1%88%D0%BE%D0%BD%D0%BE%D0%BC-p05039146.html?v1=108980644&v2=1882974",
+ "https://www.zara.com/ru/ru/%D0%B1%D1%80%D1%8E%D0%BA%D0%B8-%D1%81-%D0%B2%D1%8B%D1%81%D0%BE%D0%BA%D0%BE%D0%B9-%D0%BF%D0%BE%D1%81%D0%B0%D0%B4%D0%BA%D0%BE%D0%B9-p07901432.html?v1=120500928": {
+  "type": "multicolorLink",
+  "lastCheckResult": {
+   "type": "multicolors",
+   "name": "БРЮКИ С ВЫСОКОЙ ПОСАДКОЙ",
+   "colors": [
+    {
+     "color": {
+      "name": "БЕЛЫЙ",
+      "code": "rgb(247, 246, 244)"
+     },
+     "sizes": [
+      {
+       "size": "XS",
+       "disabled": true
+      },
+      {
+       "size": "S",
+       "disabled": true
+      },
+      {
+       "size": "M",
+       "disabled": true
+      },
+      {
+       "size": "L",
+       "disabled": true
+      },
+      {
+       "size": "XL",
+       "disabled": true
+      },
+      {
+       "size": "XXL",
+       "disabled": true
+      }
+     ]
+    },
+    {
+     "color": {
+      "name": "ПУДРОВО-СИНИЙ",
+      "code": "rgb(91, 120, 159)"
+     },
+     "sizes": [
+      {
+       "size": "XS",
+       "disabled": false
+      },
+      {
+       "size": "S",
+       "disabled": false
+      },
+      {
+       "size": "M",
+       "disabled": true
+      },
+      {
+       "size": "L",
+       "disabled": true
+      },
+      {
+       "size": "XL",
+       "disabled": true
+      },
+      {
+       "size": "XXL",
+       "disabled": true
+      }
+     ]
+    },
+    {
+     "color": {
+      "name": "ЦВЕТ ОЛИВКОВОГО МАСЛА",
+      "code": "rgb(115, 84, 27)"
+     },
+     "sizes": [
+      {
+       "size": "XS",
+       "disabled": false
+      },
+      {
+       "size": "S",
+       "disabled": false
+      },
+      {
+       "size": "M",
+       "disabled": false
+      },
+      {
+       "size": "L",
+       "disabled": true
+      },
+      {
+       "size": "XL",
+       "disabled": false
+      },
+      {
+       "size": "XXL",
+       "disabled": false
+      }
+     ]
+    },
+    {
+     "color": {
+      "name": "НЕБЕСНО-ГОЛУБОЙ",
+      "code": "rgb(209, 213, 220)"
+     },
+     "sizes": [
+      {
+       "size": "XS",
+       "disabled": true
+      },
+      {
+       "size": "S",
+       "disabled": false
+      },
+      {
+       "size": "M",
+       "disabled": true
+      },
+      {
+       "size": "L",
+       "disabled": true
+      },
+      {
+       "size": "XL",
+       "disabled": false
+      },
+      {
+       "size": "XXL",
+       "disabled": true
+      }
+     ]
+    }
+   ]
+  },
+  "trackFor": [
+   {
+    "color": "МЯТНЫЙ",
+    "size": "M"
+   },
+   {
+    "color": "СЕРЫЙ С МЕЛАНЖЕВЫМ ЭФФЕКТОМ",
+    "size": "L"
+   },
+   {
+    "color": "МЯТНЫЙ",
+    "size": "XXL"
+   },
+   {
+    "color": "СЕРЫЙ С МЕЛАНЖЕВЫМ ЭФФЕКТОМ",
+    "size": "XL"
+   },
+   {
+    "color": "РОЗОВЫЙ",
+    "size": "XL"
+   },
+   {
+    "color": "РЫЖЕВАТО-КОРИЧНЕВЫЙ",
+    "size": "L"
+   },
+   {
+    "color": "ЧЕРНЫЙ",
+    "size": "M"
+   },
+   {
+    "color": "ПУДРОВО-РОЗОВЫЙ",
+    "size": "XS"
+   },
+   {
+    "color": "БЕЛЫЙ",
+    "size": "XL"
+   },
+   {
+    "color": "БЕЛЫЙ",
+    "size": "L"
+   },
+   {
+    "color": "БЕЛЫЙ",
+    "size": "S"
+   },
+   {
+    "color": "ЧЕРНЫЙ",
+    "size": "XXL"
+   },
+   {
+    "color": "ГОРЧИЧНЫЙ",
+    "size": "XXL"
+   }
+  ]
+ },
+ "https://www.zara.com/ru/ru/%D0%BA%D1%83%D1%80%D1%82%D0%BA%D0%B0-%D1%81-%D0%BA%D0%B0%D0%BF%D1%8E%D1%88%D0%BE%D0%BD%D0%BE%D0%BC-p05039146.html?v1=108980644&v2=1882974": {
+  "type": "simpleLink",
+  "lastCheckResult": {
+   "type": "simple",
+   "name": "КУРТКА С КАПЮШОНОМ",
+   "sizes": [
+    {
+     "size": "XS",
+     "disabled": false
+    },
+    {
+     "size": "S",
+     "disabled": false
+    },
+    {
+     "size": "M",
+     "disabled": false
+    },
+    {
+     "size": "L",
+     "disabled": false
+    },
+    {
+     "size": "XL",
+     "disabled": false
+    },
+    {
+     "size": "XXL",
+     "disabled": true
+    }
+   ]
+  },
+  "trackFor": [
+   "XS",
+   "S"
+  ]
+ }
+}

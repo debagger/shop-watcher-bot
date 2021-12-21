@@ -8,6 +8,7 @@ import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 import { AuthService } from "../auth/auth.service";
+import { PinoLogger } from "nestjs-pino";
 
 @Injectable()
 @EventsHandler(NewSizeExist)
@@ -17,7 +18,8 @@ export class TelegramBotService
     private config: ConfigService,
     private chatDataStorage: ChatDataService,
     private spider: SiteCrawlerService,
-    private authService: AuthService
+    private authService: AuthService,
+    private readonly logger: PinoLogger
   ) { }
 
   async handle(event: NewSizeExist) {
@@ -269,10 +271,8 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
               const keyboard = Markup.inlineKeyboard(buttons);
               try {
                 const result = await ctx.reply(link, keyboard);
-                console.log(result)
               } catch (error) {
-                console.error(error);
-
+                this.logger.error(error)
               }
               break;
             }
@@ -288,10 +288,8 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
             const keyboard = Markup.inlineKeyboard(buttons);
             try {
               const result = await ctx.reply(link, keyboard);
-              console.log(result)
             } catch (error) {
-              console.error(error);
-
+              this.logger.error(error)
             }
             break;
           }
