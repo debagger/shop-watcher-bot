@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from "dotenv"
 import * as cookie from "cookie-parser"
+import { env } from "process"
 
 
 async function bootstrap() {
@@ -12,6 +13,8 @@ async function bootstrap() {
   const adapter = app.getHttpAdapter();
   adapter.use(cookie())
 
-  await app.listen(3001);
+  const port = env.PORT ? env.port : 3001
+  await app.listen(port);
+  console.log(`Server listen on port: ${port}`)
 }
 bootstrap();

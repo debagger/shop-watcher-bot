@@ -14,18 +14,52 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ProxyListModule } from './proxy-list/proxy-list.module';
 import * as Entities from './entities'
+import { env } from 'process'
 
+const mysqlConfigNames = {
+  host: 'MYSQL_HOST',
+  port: 'MYSQL_PORT',
+  username: 'MYSQL_USERNAME',
+  password: 'MYSQL_PASSWORD',
+  database: 'MYSQL_DATABASE'
+}
+
+type mysqlConfigType = typeof mysqlConfigNames
+
+const getDbConfigs = () => {
+  const config: any = {}
+  const notFound = []
+  Object.keys(mysqlConfigNames).forEach(key => {
+    const envVarName = mysqlConfigNames[key]
+    const value = env[envVarName]
+    if (value) {
+      config[key] = value
+    }
+    else {
+      notFound.push(envVarName)
+    }
+  })
+  config.port = Number(config.port)
+  if (notFound.length > 0) {
+    console.log(`${notFound.join(', ')} environment variables must be defined.`)
+    return process.exit(1)
+  } else {
+    if (!Number.isInteger(config.port)) {
+      console.log(`MYSQL_PORT environment variable must be an integer.`)
+      return process.exit(1)
+    }
+    console.log("Database config:")
+    console.table(config);
+    return config
+  }
+}
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'perconaserver',
-      port: 3306,
-      username: 'root',
-      password: 'password',
-      database: 'bot',
+      ...getDbConfigs(),
       entities: Object.values(Entities),
       synchronize: true,
       // maxQueryExecutionTime: 1000,
