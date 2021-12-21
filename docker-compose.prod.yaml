@@ -1,0 +1,29 @@
+version: "3.9"
+networks:
+  intranet:
+    external: true 
+volumes:
+  botdata:
+services:
+  zarabot:
+    image: node:16
+    entrypoint: /bin/bash
+    command: -c git clone https://github.com/debagger/shop-watcher-bot.git; cd shop-watcher-bot && npm i && npm run start
+    volumes:
+      - botdata:/bot-data
+    container_name: zarabot
+    environment:
+      - CHATS_DATA_DIR=/bot-data
+      - JWT_SECRET=!!!SET!!!
+      - TELEGRAM_BOT_API_KEY=any_valid_key!!!
+    restart: always
+    networks:
+      - intranet
+    expose:
+      - "3001"
+    labels:  
+      - "traefik.enable=true"
+      - "traefik.http.routers.zarabot.rule=Host(`zara-bot.debagger.ru`)"
+      - "traefik.http.routers.zarabot.tls=true"
+      - "traefik.http.routers.zarabot.tls.certresolver=leresolver"
+      - "traefik.http.routers.zarabot.middlewares=traefik-forward-auth"
