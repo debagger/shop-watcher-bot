@@ -14,8 +14,8 @@ services:
     container_name: zarabot
     environment:
       - CHATS_DATA_DIR=/bot-data
-      - JWT_SECRET=!!!SET!!!
-      - TELEGRAM_BOT_API_KEY=any_valid_key!!!
+      - JWT_SECRET=${JWT_SECRET}
+      - TELEGRAM_BOT_API_KEY=${TELEGRAM_BOT_API_KEY}
     restart: always
     networks:
       - intranet
