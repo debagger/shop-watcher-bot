@@ -39,3 +39,4 @@ services:
       - "traefik.http.routers.zarabot.tls=true"
       - "traefik.http.routers.zarabot.tls.certresolver=leresolver"
       # - "traefik.http.routers.zarabot.middlewares=traefik-forward-auth"
+      
