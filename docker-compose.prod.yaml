@@ -15,7 +15,8 @@ services:
       cd shop-watcher-bot && 
       npm i && 
       npm run build && 
-      pm2 start app --watch'
+      pm2 start --watch &&
+      pm2 ls'
     volumes:
       - botdata:/bot-data
     container_name: zarabot
