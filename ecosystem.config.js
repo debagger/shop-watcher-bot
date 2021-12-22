@@ -1,6 +1,6 @@
 module.exports = {
   apps : [{
-    name   : "Shop watcher bot",
+    name   : "app",
     script : "./dist/main.js"
   }]
 }

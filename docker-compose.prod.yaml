@@ -10,11 +10,12 @@ services:
     entrypoint: /bin/bash
     command: >
       -c 
-      'git clone https://github.com/debagger/shop-watcher-bot.git; 
+      'npm i -g pm2
+      git clone https://github.com/debagger/shop-watcher-bot.git; 
       cd shop-watcher-bot && 
       npm i && 
       npm run build && 
-      npm run start:prod'
+      pm2 start app --watch'
     volumes:
       - botdata:/bot-data
     container_name: zarabot
@@ -34,7 +35,6 @@ services:
     expose:
       - "3001"
     labels:
-      - "testlabel"
       - "traefik.enable=true"
       - "traefik.http.routers.zarabot.rule=Host(`${HOST}`)"
       - "traefik.http.routers.zarabot.tls=true"
