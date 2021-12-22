@@ -18,9 +18,9 @@ async function bootstrap() {
   adapter.use("/hookshot",
     hookshot('refs/heads/master', function (info) {
       const shell = process.env.SHELL;
-      const args = ['-c', "'git pull && npm run build'"];
+      const args = ['-c', "git pull && npm run build"];
       logger.log(`ref ${info.ref} was pushed. Run ${shell} with ${args}`)
-      spawn(shell, args, { stdio: 'inherit' })
+      spawn(shell, args, { stdio: 'inherit', detached: true })
     }))
   const port = env.PORT ? env.port : 3001
 
