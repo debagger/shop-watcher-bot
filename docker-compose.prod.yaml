@@ -10,7 +10,7 @@ services:
     entrypoint: /bin/bash
     command: >
       -c 
-      'npm i -g pm2
+      'npm i -g pm2;
       git clone https://github.com/debagger/shop-watcher-bot.git; 
       cd shop-watcher-bot && 
       npm i && 
