@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { PinoLogger } from 'nestjs-pino';
 import { parse } from 'node-html-parser';
 import {connect} from "puppeteer";
 
@@ -21,6 +22,7 @@ export type ProxyListExtractor = () => Promise<ProxyListExtractionResult>
 
 @Injectable()
 export class ProxyListSourcesService {
+    constructor(private logger: PinoLogger){}
     private sources: Record<string, ProxyListExtractor> = {
         "www.socks-proxy.net": async () => {
             const res = await axios.get('https://www.socks-proxy.net/');
@@ -116,6 +118,7 @@ export class ProxyListSourcesService {
     }
 
     public async extractAllSources() {
+        this.logger.info(`Run proxy list extraction from web sources...`)
         const extractionResult = await Promise.all(Object.entries(this.sources)
             .map(async ([sourceName, source]) => {
                 const result = { sourceName, list: null, error: null }
@@ -126,6 +129,8 @@ export class ProxyListSourcesService {
                 }
                 return result
             }))
+
+            this.logger.info(`Proxy list extraction from web sources completed.`)
         return extractionResult.reduce((acc, sourceResult) => {
             if (sourceResult.list) acc.list.push(...sourceResult.list)
             if (sourceResult.error) acc.errors[sourceResult.sourceName] = sourceResult.error

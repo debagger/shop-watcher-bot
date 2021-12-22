@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { MulticolorLink, SimpleLink, TrackItem } from "../file-db/chat-links.interface";
+import { LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../file-db/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
@@ -116,9 +116,14 @@ export class TelegramBotService
 
       let linkData: any = links[link];
 
+      let res: LinkCheckResultSimple | LinkCheckResultMulticolors
+      try {
+        res = await this.spider.getData(link);
+      } catch (error) {
+        ctx.reply('Не удалось загрузить информацию о товаре.');
 
+      }
 
-      const res = await this.spider.getData(link);
 
       if (!linkData) {
         linkData = {};

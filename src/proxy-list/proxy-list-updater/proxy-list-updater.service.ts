@@ -4,13 +4,15 @@ import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { ProxyListSourcesService } from '../proxy-list-sources/proxy-list-sources.service';
 import { ProxyListSource, ProxyListUpdate, Proxy } from "./../../entities";
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class ProxyListUpdaterService {
     constructor(private sourcesService: ProxyListSourcesService,
         @InjectRepository(ProxyListSource) private proxyListSourceRepo: Repository<ProxyListSource>,
         @InjectRepository(ProxyListUpdate) private proxyListUpdatesRepo: Repository<ProxyListUpdate>,
-        @InjectRepository(Proxy) private proxiesRepo: Repository<Proxy>) { }
+        @InjectRepository(Proxy) private proxiesRepo: Repository<Proxy>,
+        private logger: PinoLogger) { }
 
     @Cron("0 * * * * *")
     async updateAllSources() {
@@ -32,7 +34,17 @@ export class ProxyListUpdaterService {
             else {
                 isTimeToUpdate = true
             }
-            if (isTimeToUpdate) await this.updateSource(sourceItem.id)
+
+
+            if (isTimeToUpdate) {
+                try {
+                    this.logger.info(`Begin update from proxy list source. Source name: "${sourceItem.name}"  `)
+                    await this.updateSource(sourceItem.id)
+                } catch (error) {
+                    this.logger.error(error, `Proxy list web source update error. Source name: ${sourceItem.name}`)
+                }
+            }
+
         }
 
     }
@@ -42,6 +54,7 @@ export class ProxyListUpdaterService {
         if (!this.sourcesService.getSourcesNames().includes(sourceItem.name)) {
             throw new Error(`Proxy list source '${sourceItem.name}' is unknown and cant be updated.`)
         }
+
         const newProxyListUpdate = this.proxyListUpdatesRepo.create({ source: sourceItem, updateTime: new Date() })
         try {
             const proxiesList = await this.sourcesService.extractSourceData(sourceItem.name)
@@ -53,15 +66,16 @@ export class ProxyListUpdaterService {
                 let dbProxyItem = await this.proxiesRepo.findOne({ where: { ...proxiesListItem } })
                 if (!dbProxyItem) {
                     dbProxyItem = this.proxiesRepo.create({ ...proxiesListItem })
-                    this.proxiesRepo.save(dbProxyItem);
+                    await this.proxiesRepo.save(dbProxyItem);
                 }
                 updatedProxyList.push(dbProxyItem);
             }
             newProxyListUpdate.loadedProxies = updatedProxyList
         } catch (error) {
             newProxyListUpdate.error = error
+            this.logger.error(error, `Proxy list web source update error. Source name: ${sourceItem.name}`)
         }
-        this.proxyListUpdatesRepo.save(newProxyListUpdate)
+        await this.proxyListUpdatesRepo.save(newProxyListUpdate)
     }
 
 

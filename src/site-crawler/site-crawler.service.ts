@@ -84,8 +84,19 @@ export class SiteCrawlerService {
       this.logger.info({ targetURL }, "Connected to browser");
       const page = await browser.newPage();
       this.logger.info({ targetURL }, "Opened new page in browser");
-      await page.goto(targetURL, { waitUntil: "networkidle2", timeout: 120000 });
-      this.logger.info({ targetURL }, "Opened targetURL in browser");
+      const gotoResult = await page.goto(targetURL, { waitUntil: "networkidle2", timeout: 120000 });
+
+      const status = gotoResult.status();
+      if (status !== 200) {
+        const msg = (await gotoResult.text()).substring(0, 200) + "..."
+        this.logger.error({ targetURL, msg }, `Target URL navigate error. Status  code: ${status} (must be 200)`)
+      }
+
+      this.logger.info({
+        targetURL,
+        status,
+        statusText: gotoResult.statusText()
+      }, `Opened targetURL in browser. Status code: ${status}`);
 
       const name = await page.evaluate(() => {
         const productName = document.querySelector<HTMLElement>(
@@ -117,7 +128,11 @@ export class SiteCrawlerService {
           this.logger.info({
             targetURL,
             productName: name,
-            productSizes: colors
+            productSizes: Object.assign({},
+              ...colors.map(c => ({
+                [c.color.name]: Object.assign({},
+                  ...c.sizes.map(s => ({ [s.size]: s.disabled })))
+              })))
           }, "Sizes extracted from page");
 
           return { type, name, colors }

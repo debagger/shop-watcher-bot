@@ -15,6 +15,6 @@ async function bootstrap() {
 
   const port = env.PORT ? env.port : 3001
   await app.listen(port);
-  console.log(`Server listen on port: ${port}`)
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
