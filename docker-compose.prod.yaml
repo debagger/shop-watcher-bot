@@ -21,6 +21,7 @@ services:
       - botdata:/bot-data
     container_name: zarabot
     environment:
+      - SHELL=/bin/bash
       - CHATS_DATA_DIR=/bot-data
       - JWT_SECRET=${JWT_SECRET}
       - TELEGRAM_BOT_API_KEY=${TELEGRAM_BOT_API_KEY}
