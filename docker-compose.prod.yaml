@@ -26,6 +26,7 @@ services:
       - MYSQL_USERNAME=${MYSQL_USERNAME}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
     restart: always
     networks:
       - intranet
