@@ -34,7 +34,7 @@ export class ProxyListModule implements OnModuleInit {
   ) {}
   async onModuleInit() {
     // await this.proxyUpdater.updateSource(1)
-    // await this.proxyUpdater.updateAllSources();
+    await this.proxyUpdater.updateAllSources();
     // await this.proxyTester.checkAllProxies();
   }
 }

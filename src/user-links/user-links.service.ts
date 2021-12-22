@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ChatDataService } from "src/chat-data/chat-data.service";
-import { left, right, Either } from "fp-ts/Either";
-import { ChatLinks, MulticolorLink, SimpleLink } from "src/file-db/chat-links.interface";
+import { MulticolorLink, SimpleLink } from "src/chat-data-storage/chat-links.interface";
 import { SiteCrawlerService } from "src/site-crawler/site-crawler.service";
 
 @Injectable()

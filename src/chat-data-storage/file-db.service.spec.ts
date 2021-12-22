@@ -1,17 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FileDbService } from './file-db.service';
+import { ChatDataFileStorageService } from './file-storage.service';
 import { ConfigModule } from '@nestjs/config';
 
 describe('FileDbService', () => {
-  let service: FileDbService;
+  let service: ChatDataFileStorageService;
 
   beforeEach(async () => {
     process.env["CHATS_DATA_DIR"] = "C:\\Projects\\shop-watcher-bot\\chats";
     const module: TestingModule = await Test.createTestingModule({imports:[ConfigModule],
-      providers: [FileDbService],
+      providers: [ChatDataFileStorageService],
     }).compile();
 
-    service = module.get<FileDbService>(FileDbService);
+    service = module.get<ChatDataFileStorageService>(ChatDataFileStorageService);
   });
 
   it('should be defined', () => {

@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../file-db/chat-links.interface";
+import { LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../chat-data-storage/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";

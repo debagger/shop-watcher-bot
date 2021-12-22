@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino"
 import { launch, connect, Browser, Page } from "puppeteer";
-import { LinkCheckResultType, LinkCheckResultMulticolors, LinkCheckResultSimple, Size, LinkCheckResultBase, Color } from "../file-db/chat-links.interface";
+import { LinkCheckResultType, LinkCheckResultMulticolors, LinkCheckResultSimple, Size, LinkCheckResultBase, Color } from "../chat-data-storage/chat-links.interface";
 
 @Injectable()
 export class SiteCrawlerService {

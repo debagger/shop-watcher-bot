@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
 import { ConfigModule } from '@nestjs/config';
-import { FileDbModule } from './file-db/file-db.module';
+import { FileDbModule } from './chat-data-storage/chat-data-storage.module';
 import { ChatDataModule } from './chat-data/chat-data.module';
 import { SiteCrawlerModule } from './site-crawler/site-crawler.module';
 import { LinkScannerModule } from './link-scanner/link-scanner.module';

@@ -56,15 +56,26 @@ export class ProxyListUpdaterService {
         }
 
         const newProxyListUpdate = this.proxyListUpdatesRepo.create({ source: sourceItem, updateTime: new Date() })
+
+        let totalProxiesCount = 0
+        let newProxiesCount = 0
+
         try {
             const proxiesList = await this.sourcesService.extractSourceData(sourceItem.name)
 
             const updatedProxyList = <Proxy[]>[]
 
             for (const proxiesListItem of proxiesList) {
-                if (updatedProxyList.find(proxy => proxy.host === proxiesListItem.host && proxy.port === proxiesListItem.port)) continue
+                const isDublicated = updatedProxyList.find(proxy => proxy.host === proxiesListItem.host && proxy.port === proxiesListItem.port);
+                if (isDublicated) continue
+
+                totalProxiesCount++
+
                 let dbProxyItem = await this.proxiesRepo.findOne({ where: { ...proxiesListItem } })
                 if (!dbProxyItem) {
+
+                    newProxiesCount++
+                    
                     dbProxyItem = this.proxiesRepo.create({ ...proxiesListItem })
                     await this.proxiesRepo.save(dbProxyItem);
                 }
@@ -73,9 +84,12 @@ export class ProxyListUpdaterService {
             newProxyListUpdate.loadedProxies = updatedProxyList
         } catch (error) {
             newProxyListUpdate.error = error
-            this.logger.error(error, `Proxy list web source update error. Source name: ${sourceItem.name}`)
+            this.logger.error(error, `Proxy list web source '${sourceItem.name}' update error`)
         }
+        
         await this.proxyListUpdatesRepo.save(newProxyListUpdate)
+
+        this.logger.info(`Proxy list source ${sourceItem.name} updated. Found ${totalProxiesCount} total, ${newProxiesCount} new proxies.`)
     }
 
 

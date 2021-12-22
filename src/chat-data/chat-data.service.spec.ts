@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatDataService } from "./chat-data.service";
-import { FileDbModule } from "../file-db/file-db.module";
+import { FileDbModule } from "../chat-data-storage/chat-data-storage.module";
 import { async } from "rxjs";
 
 describe("ChatDataService", () => {

@@ -4,9 +4,10 @@ const { readFile, writeFile, opendir } = promises;
 import { join, resolve } from "path";
 import { ChatLinks } from "./chat-links.interface";
 import { ConfigService } from "@nestjs/config";
+import { ChatDataStorageInterface } from "./chat-data-storage.interface";
 
 @Injectable()
-export class FileDbService {
+export class ChatDataFileStorageService implements ChatDataStorageInterface {
   constructor(private config: ConfigService) {}
   private readonly path = resolve(this.config.get<string>("CHATS_DATA_DIR"));
 

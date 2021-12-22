@@ -1,8 +1,9 @@
-import { FileDbService } from "../file-db/file-db.service";
-import { ChatLinks } from "../file-db/chat-links.interface";
+import { ChatDataFileStorageService } from "../chat-data-storage/file-storage.service";
+import { ChatLinks } from "../chat-data-storage/chat-links.interface";
+import { ChatDataDBStorageService } from "src/chat-data-storage/db-storage.service";
 
 export class Chat {
-  constructor(private chatId: Number, private db: FileDbService) {}
+  constructor(private chatId: number, private db: ChatDataDBStorageService) {}
 
   async load() {
     this._links = await this.db.getChatLinks(this.chatId);
