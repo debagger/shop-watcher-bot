@@ -16,7 +16,7 @@ services:
       npm i && 
       npm run build && 
       pm2 start --watch &&
-      pm2 ls'
+      pm2 logs app'
     volumes:
       - botdata:/bot-data
     container_name: zarabot
