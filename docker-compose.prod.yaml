@@ -31,7 +31,7 @@ services:
     networks:
       - intranet
     expose:
-      - "3001"
+      - "${APP_PORT}"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.zarabot.rule=Host(`${HOST}`)"
