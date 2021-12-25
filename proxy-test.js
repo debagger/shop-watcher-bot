@@ -53,8 +53,6 @@ async function getProxiedResponse(axiosRequestConfig) {
     } catch (error) {
         throw new Error("All requests fails!")
     }
-
-
 }
 
 // async function test() {

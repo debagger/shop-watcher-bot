@@ -1,3 +1,5 @@
+import 'core-js/actual/promise'
+
 import { Logger, PinoLogger } from "nestjs-pino"
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -6,6 +8,7 @@ import * as cookie from "cookie-parser"
 import { env } from "process"
 import * as hookshot from "hookshot"
 import { spawn } from 'child_process'
+
 
 
 async function bootstrap() {
@@ -22,9 +25,10 @@ async function bootstrap() {
       logger.log(`ref ${info.ref} was pushed. Run ${shell} with ${args}`)
       spawn(shell, args, { stdio: 'inherit', detached: true })
     }))
-  const port = env.PORT ? env.port : 3001
+  const port = env.APP_PORT ? env.APP_PORT : 3001
 
   await app.listen(port);
+
   console.log(`Application is running on: ${port}`);
 }
 bootstrap();

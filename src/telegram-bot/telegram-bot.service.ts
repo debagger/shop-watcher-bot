@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../chat-data-storage/chat-links.interface";
+import { ChatLinks, LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../chat-data-storage/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
@@ -112,64 +112,23 @@ export class TelegramBotService
         return;
       }
 
-      const links = chat.links;
 
-      let linkData: any = links[link];
-
-      let res: LinkCheckResultSimple | LinkCheckResultMulticolors
-      try {
-        res = await this.spider.getData(link);
-      } catch (error) {
-        ctx.reply('Не удалось загрузить информацию о товаре.');
-
-      }
-
-
-      if (!linkData) {
-        linkData = {};
-      }
-
-      if (res && res.type === 'simple' && res.name && res.sizes.length > 0) {
-        linkData.type = 'simpleLink'
-        if (!links[link]) {
-          links[link] = linkData;
+      this.spider.getData(link).then((res) => {
+        if (res && res.type === 'simple' && res.name && res.sizes.length > 0) {
+          return this.sendSimpleLinkResult(chatId, link, res);
         }
 
-        linkData.lastCheckResult = res;
-
-        const msg = `
-Размерный ряд: 
-${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
-Напишите за каким следить?
-    `;
-        const buttons = res.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ size: i.size, link })));
-        const keyboard = Markup.inlineKeyboard(buttons);
-        ctx.reply(msg, keyboard);
-        links.lastLink = link;
-        return
-      }
-
-      if (res && res.type === 'multicolors' && res.name && res.colors.length > 0) {
-        linkData.type = 'multicolorLink'
-        if (!links[link]) {
-          links[link] = linkData;
+        if (res && res.type === 'multicolors' && res.name && res.colors.length > 0) {
+          return this.sendMulticolorLinkResult(chatId, link, res);
         }
 
-        linkData.lastCheckResult = res;
-        for (const color of res.colors) {
-          const msg = `
-${color.color.name}
-Размерный ряд: 
-${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
-Напишите за каким следить?
-    `;
-          const buttons = color.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ link, colorName: color.color.name, size: i.size })));
-          const keyboard = Markup.inlineKeyboard(buttons);
-          ctx.reply(msg, keyboard);
-        }
-        links.lastLink = link;
-        return
-      }
+      }).catch(err => {
+        const { telegram } = this.botInstance
+        telegram.sendMessage(chatId, `Произошла ошибка при загрузке ссылки \n ${link}`)
+      });
+
+      ctx.reply("Начал загрузку информации по данной позиции")
+
 
     });
 
@@ -395,6 +354,70 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
   }
 
   public botInstance: Telegraf<Context>;
+
+  private async sendMulticolorLinkResult(chatId: number, link: string, res: LinkCheckResultMulticolors) {
+    const chat = await this.chatDataStorage.getChat(chatId)
+    const links = chat.links;
+    let linkData: any = links[link];
+
+    if (!linkData) {
+      linkData = {};
+    }
+
+    linkData.type = 'multicolorLink';
+    if (!links[link]) {
+      links[link] = linkData;
+    }
+
+    linkData.lastCheckResult = res;
+    for (const color of res.colors) {
+      const msg = `
+${color.color.name}
+Размерный ряд: 
+${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
+Напишите за каким следить?
+    `;
+      const buttons = color.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ link, colorName: color.color.name, size: i.size })));
+      const keyboard = Markup.inlineKeyboard(buttons);
+
+      const { telegram } = this.botInstance;
+      await telegram.sendMessage(chatId, msg, keyboard);
+    }
+    links.lastLink = link;
+    return;
+  }
+
+  private async sendSimpleLinkResult(chatId: number, link: string, res: LinkCheckResultSimple) {
+
+    const chat = await this.chatDataStorage.getChat(chatId)
+    const links = chat.links;
+    let linkData: any = links[link];
+
+    if (!linkData) {
+      linkData = {};
+    }
+
+    linkData.type = 'simpleLink';
+    if (!links[link]) {
+      links[link] = linkData;
+    }
+
+    linkData.lastCheckResult = res;
+
+    const msg = `
+Размерный ряд: 
+${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
+Напишите за каким следить?
+    `;
+    const buttons = res.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ size: i.size, link })));
+    const keyboard = Markup.inlineKeyboard(buttons);
+
+    const { telegram } = this.botInstance;
+    await telegram.sendMessage(chatId, msg, keyboard);
+
+    links.lastLink = link;
+    return;
+  }
 
   public async onModuleInit() {
     this.botInstance = await this.botInit();

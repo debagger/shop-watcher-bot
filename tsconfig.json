@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["ES2019"],
+    "lib": ["ES2020","ES2021.Promise"], 
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "target": "es2019",
+    "target": "es2020",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",

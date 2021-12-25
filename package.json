@@ -34,6 +34,7 @@
     "axios": "^0.24.0",
     "axios-timing": "^1.0.2",
     "cookie-parser": "^1.4.6",
+    "core-js": "^3.20.1",
     "dotenv": "^10.0.0",
     "fp-ts": "^2.11.5",
     "fstb": "^1.0.0",
