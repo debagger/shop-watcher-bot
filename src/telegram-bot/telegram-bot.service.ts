@@ -87,7 +87,6 @@ export class TelegramBotService
       if (!message.text) return;
       const text = message.text;
       const chatId = message.chat.id;
-      const chat = await this.chatDataStorage.getChat(chatId);
       let link
       try {
         const url = new URL(text);

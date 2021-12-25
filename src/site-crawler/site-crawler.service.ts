@@ -130,7 +130,7 @@ export class SiteCrawlerService {
 
         let gotoResult: HTTPResponse
         for (let i = 1; i <= 5; i++) {
-          gotoResult = await page.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 30000 });
+          gotoResult = await page.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 300000 });
 
           console.log(`Navigation finished. Canceling ${browseContext.activeRequestCancellers.size} active requests`)
 
