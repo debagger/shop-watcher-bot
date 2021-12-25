@@ -132,8 +132,7 @@ export class BrowserManagerService {
           method: <Method>interceptedRequest.method(),
           data: interceptedRequest.postData(),
           headers: interceptedRequest.headers(),
-          responseType: 'arraybuffer',
-          maxRedirects: 0
+          responseType: 'arraybuffer'
         }
   
         const { response: res, proxyAddress, time } = await this.getProxiedResponse(config, context, page)

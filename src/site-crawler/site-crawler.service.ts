@@ -143,6 +143,7 @@ export class SiteCrawlerService {
 
           if (gotoResult.status() !== 200) {
             console.log(`Page response status: ${gotoResult.status()}. Must be 200. Retry ${i}`)
+            continue
           }
 
           break
