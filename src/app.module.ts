@@ -15,6 +15,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ProxyListModule } from './proxy-list/proxy-list.module';
 import * as Entities from './entities'
 import { env } from 'process'
+import { BrowserManagerModule } from './browser-manager/browser-manager.module';
 
 const mysqlConfigNames = {
   host: 'MYSQL_HOST',
@@ -75,7 +76,8 @@ const getDbConfigs = () => {
     LinkScannerModule,
     AuthModule,
     UserLinksModule,
-    ProxyListModule],
+    ProxyListModule,
+    BrowserManagerModule],
   controllers: [AppController],
   providers: [AppService],
 })
