@@ -7,7 +7,8 @@ import { LinkCheckResultType, LinkCheckResultMulticolors, LinkCheckResultSimple,
 import { parse } from 'node-html-parser';
 import { BrowserManagerService } from "src/browser-manager/browser-manager.service";
 import { BrowseContext } from "./../browser-manager/browse-context.type";
-
+import { getEventListeners } from "events";
+import { ColdObservable } from "rxjs/internal/testing/ColdObservable";
 
 @Injectable()
 export class SiteCrawlerService {
@@ -18,81 +19,53 @@ export class SiteCrawlerService {
     logger.setContext(SiteCrawlerService.name);
   }
 
-  private async isSimpleOrMulticolorSizesSelector(page: Page): Promise<LinkCheckResultType> {
-    const colorSelectorButtonsCount = await page.evaluate(() => {
-      const selectorButtons = document.getElementsByClassName('product-detail-color-selector__color-button');
-      return selectorButtons.length;
-    })
-    return colorSelectorButtonsCount > 0 ? 'multicolors' : 'simple'
-  }
+  // private async isSimpleOrMulticolorSizesSelector(page: Page): Promise<LinkCheckResultType> {
+  //   const colorSelectorButtonsCount = await page.evaluate(() => {
+  //     const selectorButtons = document.getElementsByClassName('product-detail-color-selector__color-button');
+  //     return selectorButtons.length;
+  //   })
+  //   return colorSelectorButtonsCount > 0 ? 'multicolors' : 'simple'
+  // }
 
-  private async getSizesFromPage(page: Page): Promise<Size[]> {
-    const sizes: Size[] = await page.evaluate(() => {
-      const productSize = document.querySelector<HTMLElement>(
-        ".product-detail-size-selector__size-list"
-      );
-      if (productSize) {
-        return Array.from(productSize.children)
-          .map((i: HTMLElement) => {
-            return {
-              size: i.querySelector<HTMLElement>(".product-detail-size-info__main-label").innerText,
-              disabled: !!((<any>i.attributes).disabled || i.classList.contains("product-detail-size-selector__size-list-item--is-disabled")),
-            };
-          });
-      } else {
-        return [];
+  // private async getSizesFromPage(page: Page): Promise<Size[]> {
+  //   const sizes: Size[] = await page.evaluate(() => {
+  //     const productSize = document.querySelector<HTMLElement>(
+  //       ".product-detail-size-selector__size-list"
+  //     );
+  //     if (productSize) {
+  //       return Array.from(productSize.children)
+  //         .map((i: HTMLElement) => {
+  //           return {
+  //             size: i.querySelector<HTMLElement>(".product-detail-size-info__main-label").innerText,
+  //             disabled: !!((<any>i.attributes).disabled || i.classList.contains("product-detail-size-selector__size-list-item--is-disabled")),
+  //           };
+  //         });
+  //     } else {
+  //       return [];
+  //     }
+  //   });
+  //   return sizes
+  // }
+
+  private async extractProductInfo(page: Page): Promise<LinkCheckResultMulticolors> {
+    const data = await page.evaluate(() => window['zara'])
+    const zaraProduct = data?.viewPayload?.product
+    const name = zaraProduct.name
+    const colors = zaraProduct.detail?.colors?.map((zaraColor => {
+      const color: Color = { code: zaraColor.hexCode, name: zaraColor.name }
+      return {
+        color, sizes: zaraColor.sizes?.map(zaraSize => {
+          const result: Size = { size: zaraSize.name, disabled: zaraSize.availability !== 'in_stock' }
+          return result
+        })
       }
-    });
-    return sizes
+    }))
+
+    const result: LinkCheckResultMulticolors = { type: 'multicolors', name, colors, }
+    return result;
   }
 
-  private async getColorsSizesFromPage(page: Page): Promise<{ color: Color; sizes: Size[] }[]> {
-    const colors = await page.evaluate(async () => {
-      const sleep = time => new Promise<void>((resolve) => {
-        setTimeout(() => resolve(), time)
-      })
-
-      await sleep(1000)
-      
-      const colors = Array.from(document.getElementsByClassName('product-detail-color-selector__color-button') as HTMLCollectionOf<HTMLButtonElement>)
-
-      const result: { color: Color; sizes: Size[] }[] = []
-
-      for (let color of colors) {
-
-        color.click();
-        await sleep(1000)
-        let colorCode = ""
-        const colorElement = color.getElementsByClassName('product-detail-color-selector__color-area')[0] as HTMLSpanElement
-
-        if (colorElement) {
-          colorCode = colorElement.style.backgroundColor
-        }
-
-        const resultColor: Color = { name: color.innerText, code: colorCode };
-
-        const productSize = document.querySelector<HTMLUListElement>(
-          ".product-detail-size-selector__size-list"
-        );
-
-        if (productSize) {
-          const colorSizes = Array.from(productSize.children)
-            .map((i: HTMLElement) => {
-              return {
-                size: i.querySelector<HTMLElement>(".product-detail-size-info__main-label").innerText,
-                disabled: !!((<any>i.attributes).disabled) || i.classList.contains("product-detail-size-selector__size-list-item--is-disabled"),
-              };
-            });
-          result.push({ color: resultColor, sizes: colorSizes })
-        }
-      }
-      return result;
-
-    });
-    return colors;
-  }
-
-  private async makeRequest(targetURL: string): Promise<LinkCheckResultSimple | LinkCheckResultMulticolors> {
+  private async makeRequest(targetURL: string): Promise<LinkCheckResultMulticolors> {
 
     const browseContext: BrowseContext = {
       url: targetURL,
@@ -192,37 +165,19 @@ export class SiteCrawlerService {
 
         this.logger.info({ targetURL, productName: name }, "Product name extracted from page");
 
-        const type = await this.isSimpleOrMulticolorSizesSelector(page);
+        const productInfo = await this.extractProductInfo(page)
+        
+        this.logger.info({
+          targetURL,
+          productName: name,
+          productSizes: Object.assign({},
+            ...productInfo.colors.map(c => ({
+              [c.color.name]: Object.assign({},
+                ...c.sizes.map(s => ({ [s.size]: s.disabled })))
+            })))
+        }, "Sizes extracted from page");
 
-        switch (type) {
-          case 'simple': {
-            const sizes = await this.getSizesFromPage(page);
-            this.logger.info({
-              targetURL,
-              productName: name,
-              productSizes: sizes
-            }, "Sizes extracted from page");
-
-            return { type, name, sizes };
-            break;
-          }
-          case 'multicolors': {
-            const colors = await this.getColorsSizesFromPage(page)
-            this.logger.info({
-              targetURL,
-              productName: name,
-              productSizes: Object.assign({},
-                ...colors.map(c => ({
-                  [c.color.name]: Object.assign({},
-                    ...c.sizes.map(s => ({ [s.size]: s.disabled })))
-                })))
-            }, "Sizes extracted from page");
-
-            return { type, name, colors }
-            break;
-          }
-        }
-
+        return productInfo
 
       } catch (err) {
         this.logger.error(err, "Error when try to get product data")
