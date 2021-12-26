@@ -1,18 +1,6 @@
 export interface ChatLinks {
   lastLink?: string;
-  [key: string]: SimpleLink| MulticolorLink | string | undefined;
-}
-
-export type LinkType = "simpleLink" | "multicolorLink"
-
-export interface LinkBase {
-  type: LinkType
-}
-
-export interface SimpleLink extends LinkBase {
-  type: "simpleLink";
-  lastCheckResult?: LinkCheckResultSimple;
-  trackFor?: string[];
+  [key: string]:  MulticolorLink | string | undefined;
 }
 
 export interface TrackItem {
@@ -20,22 +8,9 @@ export interface TrackItem {
   size: string
 }
 
-export interface MulticolorLink extends LinkBase {
-  type: "multicolorLink";
+export interface MulticolorLink {
   lastCheckResult?: LinkCheckResultMulticolors;
   trackFor?: TrackItem[];
-}
-
-export type LinkCheckResultType = "simple" | "multicolors"
-
-export interface LinkCheckResultBase {
-  type: LinkCheckResultType
-  name: string;
-}
-
-export interface LinkCheckResultSimple extends LinkCheckResultBase {
-  type: "simple"
-  sizes: Size[];
 }
 
 export interface Color {
@@ -43,8 +18,8 @@ export interface Color {
   code: string;
 }
 
-export interface LinkCheckResultMulticolors extends LinkCheckResultBase {
-  type: "multicolors";
+export interface LinkCheckResultMulticolors {
+  name: string;
   colors: { color: Color; sizes: Size[] }[]
 }
 

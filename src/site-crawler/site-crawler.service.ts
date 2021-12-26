@@ -3,7 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { PinoLogger } from "nestjs-pino"
 import { Page, HTTPResponse } from "puppeteer";
 
-import { LinkCheckResultType, LinkCheckResultMulticolors, LinkCheckResultSimple, Size, LinkCheckResultBase, Color } from "../chat-data-storage/chat-links.interface";
+import { LinkCheckResultMulticolors, Size, Color } from "../chat-data-storage/chat-links.interface";
 import { parse } from 'node-html-parser';
 import { BrowserManagerService } from "src/browser-manager/browser-manager.service";
 import { BrowseContext } from "./../browser-manager/browse-context.type";
@@ -19,34 +19,6 @@ export class SiteCrawlerService {
     logger.setContext(SiteCrawlerService.name);
   }
 
-  // private async isSimpleOrMulticolorSizesSelector(page: Page): Promise<LinkCheckResultType> {
-  //   const colorSelectorButtonsCount = await page.evaluate(() => {
-  //     const selectorButtons = document.getElementsByClassName('product-detail-color-selector__color-button');
-  //     return selectorButtons.length;
-  //   })
-  //   return colorSelectorButtonsCount > 0 ? 'multicolors' : 'simple'
-  // }
-
-  // private async getSizesFromPage(page: Page): Promise<Size[]> {
-  //   const sizes: Size[] = await page.evaluate(() => {
-  //     const productSize = document.querySelector<HTMLElement>(
-  //       ".product-detail-size-selector__size-list"
-  //     );
-  //     if (productSize) {
-  //       return Array.from(productSize.children)
-  //         .map((i: HTMLElement) => {
-  //           return {
-  //             size: i.querySelector<HTMLElement>(".product-detail-size-info__main-label").innerText,
-  //             disabled: !!((<any>i.attributes).disabled || i.classList.contains("product-detail-size-selector__size-list-item--is-disabled")),
-  //           };
-  //         });
-  //     } else {
-  //       return [];
-  //     }
-  //   });
-  //   return sizes
-  // }
-
   private async extractProductInfo(page: Page): Promise<LinkCheckResultMulticolors> {
     const data = await page.evaluate(() => window['zara'])
     const zaraProduct = data?.viewPayload?.product
@@ -61,7 +33,10 @@ export class SiteCrawlerService {
       }
     }))
 
-    const result: LinkCheckResultMulticolors = { type: 'multicolors', name, colors, }
+    const result: LinkCheckResultMulticolors = {
+      name,
+      colors,
+    }
     return result;
   }
 
@@ -166,7 +141,7 @@ export class SiteCrawlerService {
         this.logger.info({ targetURL, productName: name }, "Product name extracted from page");
 
         const productInfo = await this.extractProductInfo(page)
-        
+
         this.logger.info({
           targetURL,
           productName: name,
@@ -187,10 +162,10 @@ export class SiteCrawlerService {
     return result;
   }
 
-  private prevTask: Promise<LinkCheckResultSimple | LinkCheckResultMulticolors>
+  private prevTask: Promise<LinkCheckResultMulticolors>
 
-  public getData(targetURL: string): Promise<LinkCheckResultSimple | LinkCheckResultMulticolors> {
-    const task = new Promise<LinkCheckResultSimple | LinkCheckResultMulticolors>((resolve, reject) => {
+  public getData(targetURL: string): Promise<LinkCheckResultMulticolors> {
+    const task = new Promise<LinkCheckResultMulticolors>((resolve, reject) => {
       if (this.prevTask) {
         this.prevTask.finally(() => {
           this.makeRequest(targetURL).then((res) => {

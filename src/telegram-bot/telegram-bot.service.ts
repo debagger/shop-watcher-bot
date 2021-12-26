@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { ChatLinks, LinkCheckResultMulticolors, LinkCheckResultSimple, MulticolorLink, SimpleLink, TrackItem } from "../chat-data-storage/chat-links.interface";
+import { ChatLinks, LinkCheckResultMulticolors, MulticolorLink, TrackItem } from "../chat-data-storage/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
@@ -113,12 +113,8 @@ export class TelegramBotService
 
 
       this.spider.getData(link).then((res) => {
-        if (res && res.type === 'simple' && res.name && res.sizes.length > 0) {
-          return this.sendSimpleLinkResult(chatId, link, res);
-        }
-
-        if (res && res.type === 'multicolors' && res.name && res.colors.length > 0) {
-          return this.sendMulticolorLinkResult(chatId, link, res);
+        if (res && res.name && res.colors.length > 0) {
+          return this.sendLinkResult(chatId, link, res);
         }
 
       }).catch(err => {
@@ -142,60 +138,40 @@ export class TelegramBotService
       }
       const links = chat.links;
       if (links) {
-        const curLink = <SimpleLink | MulticolorLink>chat.links[selectedSize.link];
-        switch (curLink.lastCheckResult.type) {
-          case 'simple':
-            {
-              const foundSize = curLink.lastCheckResult?.sizes.find(
-                (i) => i.size == selectedSize.size
-              );
-              if (foundSize) {
-                if (!curLink.trackFor) {
-                  curLink.trackFor = [];
-                }
-                (<string[]>curLink.trackFor).push(foundSize.size);
-                curLink.trackFor = Array.from(new Set(<string[]>curLink.trackFor));
-                return await ctx.reply(
-                  `ОК. Я буду следить за ${curLink.trackFor.join(", ")}`
-                );
-              } else {
-                return await ctx.reply("Такого размера нет");
-              }
-            }
-          case 'multicolors': {
-            const foundColor = curLink.lastCheckResult?.colors.find(c => c.color.name === selectedSize.colorName);
-            if (!foundColor) {
-              await ctx.reply("Такой размер не найден")
-              return;
-            }
-            const foundSize = foundColor.sizes.find(
-              (i) => i.size == selectedSize.size
-            );
-            if (foundSize) {
-              if (!curLink.trackFor) {
-                curLink.trackFor = [];
-              }
-              const newTrackItem: TrackItem = { color: foundColor.color.name, size: foundSize.size };
+        const curLink = <MulticolorLink>chat.links[selectedSize.link];
 
-              if (!(<TrackItem[]>curLink.trackFor).find(i => i.size === newTrackItem.size && i.color === newTrackItem.color)) {
-                (<TrackItem[]>curLink.trackFor).push(newTrackItem)
-              }
-
-              const trackItems = (<TrackItem[]>curLink.trackFor);
-              const trackColorNames = new Set(trackItems.map(i => i.color))
-              let msg = "ОК. Я буду следить за:\n"
-
-              for (let colorName of trackColorNames) {
-                msg += `Цвет: ${colorName}. `
-                const colorSizes = trackItems.filter(i => i.color === colorName).map(i => i.size)
-                msg += `Размеры: ${colorSizes.join(", ")}\n`
-              }
-              return await ctx.reply(msg);
-            } else {
-              return await ctx.reply("Такого размера нет");
-            }
-          }
+        const foundColor = curLink.lastCheckResult?.colors.find(c => c.color.name === selectedSize.colorName);
+        if (!foundColor) {
+          await ctx.reply("Такой размер не найден")
+          return;
         }
+        const foundSize = foundColor.sizes.find(
+          (i) => i.size == selectedSize.size
+        );
+        if (foundSize) {
+          if (!curLink.trackFor) {
+            curLink.trackFor = [];
+          }
+          const newTrackItem: TrackItem = { color: foundColor.color.name, size: foundSize.size };
+
+          if (!(<TrackItem[]>curLink.trackFor).find(i => i.size === newTrackItem.size && i.color === newTrackItem.color)) {
+            (<TrackItem[]>curLink.trackFor).push(newTrackItem)
+          }
+
+          const trackItems = (<TrackItem[]>curLink.trackFor);
+          const trackColorNames = new Set(trackItems.map(i => i.color))
+          let msg = "ОК. Я буду следить за:\n"
+
+          for (let colorName of trackColorNames) {
+            msg += `Цвет: ${colorName}. `
+            const colorSizes = trackItems.filter(i => i.color === colorName).map(i => i.size)
+            msg += `Размеры: ${colorSizes.join(", ")}\n`
+          }
+          return await ctx.reply(msg);
+        } else {
+          return await ctx.reply("Такого размера нет");
+        }
+
       }
     }
     );
@@ -219,45 +195,22 @@ export class TelegramBotService
         const deleteButton =
           Markup.button.callback("Удалить ❌", `delete:${this.putCallback(link)}`);
 
-        const linkData = links[link] as SimpleLink | MulticolorLink;
-        switch (linkData.type) {
-          case 'simpleLink':
-            {
-              const buttons = [[deleteButton]];
-              if (linkData.trackFor) {
-                buttons.push(
-                  linkData.trackFor.map((size) =>
-                    Markup.button.callback(`❌ ${size}`, `deleteSize:${this.putCallback({ link, size })}`)
-                  ),
-                );
-              }
-              const keyboard = Markup.inlineKeyboard(buttons);
-              try {
-                const result = await ctx.reply(link, keyboard);
-              } catch (error) {
-                this.logger.error(error)
-              }
-              break;
-            }
-          case 'multicolorLink': {
-            const buttons = [[deleteButton]];
-            if (linkData.trackFor) {
-              const sizeButton = linkData.trackFor.map((trackItem) =>
-                [Markup.button.callback(`❌ ${trackItem.color + ': ' + trackItem.size}`, `deleteSize:${this.putCallback({ link, size: trackItem.size, color: trackItem.color })}`)]
-              )
+        const linkData = links[link] as MulticolorLink;
 
-              buttons.push(...sizeButton);
-            }
-            const keyboard = Markup.inlineKeyboard(buttons);
-            try {
-              const result = await ctx.reply(link, keyboard);
-            } catch (error) {
-              this.logger.error(error)
-            }
-            break;
-          }
+        const buttons = [[deleteButton]];
+        if (linkData.trackFor) {
+          const sizeButton = linkData.trackFor.map((trackItem) =>
+            [Markup.button.callback(`❌ ${trackItem.color + ': ' + trackItem.size}`, `deleteSize:${this.putCallback({ link, size: trackItem.size, color: trackItem.color })}`)]
+          )
+
+          buttons.push(...sizeButton);
         }
-
+        const keyboard = Markup.inlineKeyboard(buttons);
+        try {
+          const result = await ctx.reply(link, keyboard);
+        } catch (error) {
+          this.logger.error(error)
+        }
 
       }
     });
@@ -308,42 +261,19 @@ export class TelegramBotService
           return;
         }
       }
-      const linkData = links[link] as SimpleLink | MulticolorLink;
-      switch (linkData.type) {
-        case 'simpleLink':
-          {
-            const trackSizes = linkData.trackFor;
-            if (!(trackSizes && trackSizes.includes(size))) {
-              try {
-                return ctx.answerCbQuery("Не нашел такой размер");
-              } catch (err) {
-                return;
-              }
-            } else {
-              linkData.trackFor = trackSizes.filter((i) => i !== size);
-            }
-            try {
-              return await ctx.answerCbQuery(`Удалил`);
-            } catch (err) {
-              console.error(err);
-              return;
-            }
-          }
-        case 'multicolorLink': {
-          const trackSizes = linkData.trackFor;
-          if (trackSizes.find(i => i.color === color && i.size === size)) {
-            linkData.trackFor = trackSizes.filter(i => !(i.size === size && i.color === color))
-            try {
-              return await ctx.answerCbQuery(`Удалил`);
-            } catch (err) {
-              console.error(err);
-              return;
-            }
-          }
+      const linkData = links[link] as MulticolorLink;
+
+      const trackSizes = linkData.trackFor;
+      if (trackSizes.find(i => i.color === color && i.size === size)) {
+        linkData.trackFor = trackSizes.filter(i => !(i.size === size && i.color === color))
+        try {
+          return await ctx.answerCbQuery(`Удалил`);
+        } catch (err) {
+          console.error(err);
+          return;
         }
-        default:
-          break;
       }
+
 
     });
 
@@ -354,7 +284,7 @@ export class TelegramBotService
 
   public botInstance: Telegraf<Context>;
 
-  private async sendMulticolorLinkResult(chatId: number, link: string, res: LinkCheckResultMulticolors) {
+  private async sendLinkResult(chatId: number, link: string, res: LinkCheckResultMulticolors) {
     const chat = await this.chatDataStorage.getChat(chatId)
     const links = chat.links;
     let linkData: any = links[link];
@@ -382,38 +312,6 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
       const { telegram } = this.botInstance;
       await telegram.sendMessage(chatId, msg, keyboard);
     }
-    links.lastLink = link;
-    return;
-  }
-
-  private async sendSimpleLinkResult(chatId: number, link: string, res: LinkCheckResultSimple) {
-
-    const chat = await this.chatDataStorage.getChat(chatId)
-    const links = chat.links;
-    let linkData: any = links[link];
-
-    if (!linkData) {
-      linkData = {};
-    }
-
-    linkData.type = 'simpleLink';
-    if (!links[link]) {
-      links[link] = linkData;
-    }
-
-    linkData.lastCheckResult = res;
-
-    const msg = `
-Размерный ряд: 
-${res.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
-Напишите за каким следить?
-    `;
-    const buttons = res.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ size: i.size, link })));
-    const keyboard = Markup.inlineKeyboard(buttons);
-
-    const { telegram } = this.botInstance;
-    await telegram.sendMessage(chatId, msg, keyboard);
-
     links.lastLink = link;
     return;
   }
