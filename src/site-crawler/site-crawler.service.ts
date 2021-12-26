@@ -47,7 +47,13 @@ export class SiteCrawlerService {
   }
 
   private async getColorsSizesFromPage(page: Page): Promise<{ color: Color; sizes: Size[] }[]> {
-    const colors = await page.evaluate(() => {
+    const colors = await page.evaluate(async () => {
+      const sleep = time => new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), time)
+      })
+
+      await sleep(1000)
+      
       const colors = Array.from(document.getElementsByClassName('product-detail-color-selector__color-button') as HTMLCollectionOf<HTMLButtonElement>)
 
       const result: { color: Color; sizes: Size[] }[] = []
@@ -55,7 +61,7 @@ export class SiteCrawlerService {
       for (let color of colors) {
 
         color.click();
-
+        await sleep(1000)
         let colorCode = ""
         const colorElement = color.getElementsByClassName('product-detail-color-selector__color-area')[0] as HTMLSpanElement
 
@@ -130,7 +136,7 @@ export class SiteCrawlerService {
 
         let gotoResult: HTTPResponse
         for (let i = 1; i <= 5; i++) {
-          gotoResult = await page.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 300000 });
+          gotoResult = await page.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 60000 });
 
           console.log(`Navigation finished. Canceling ${browseContext.activeRequestCancellers.size} active requests`)
 
