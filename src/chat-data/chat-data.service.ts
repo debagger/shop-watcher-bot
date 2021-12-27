@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Chat } from "./chat-data-keeper";
-import { ChatDataDBStorageService } from "src/chat-data-storage/db-storage.service";
+import { ChatDataDBStorageService } from "../chat-data-storage/db-storage.service";
 @Injectable()
 export class ChatDataService {
   constructor(private db: ChatDataDBStorageService) {}

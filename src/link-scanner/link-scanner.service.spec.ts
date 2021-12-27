@@ -5,116 +5,30 @@ import { CqrsModule, EventBus } from "@nestjs/cqrs";
 import { ChatDataService } from "../chat-data/chat-data.service";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { NewSizeExist } from "./new-size-exist.event";
+import { MockFunctionMetadata, ModuleMocker } from "jest-mock";
+
+const moduleMocker = new ModuleMocker(global);
 
 describe("LinkScannerService", () => {
-  const getChatDataServiceMock = () => {
-    return {
-      getChatIds() {
-        return Promise.resolve([1]);
-      },
-      chat: {
-        links: {
-          "https://www.zara.com/ru/ru/mc.html": {
-            type: "multicolorLink",
-            lastCheckResult: {
-              name: "mc",
-              colors: [
-                {
-                  color: { name: "black" },
-                  sizes: [
-                    { size: "XL", disabled: true },
-                    { size: "XS", disabled: false },
-                  ]
-                },
-                {
-                  color: { name: "white" },
-                  sizes: [
-                    { size: "XL", disabled: false },
-                    { size: "XS", disabled: true },
-                  ]
-                },
-              ],
-            },
-            trackFor: [{ color: "black", size: "XL" }, { color: "black", size: "XS" }],
-          },
-          "https://www.zara.com/ru/ru/1.html": {
-            lastCheckResult: {
-              name: "1",
-              sizes: [
-                { size: "XL", disabled: true },
-                { size: "XS", disabled: false },
-              ],
-            },
-            trackFor: ["XL", "XS"],
-          },
-        },
-      },
-      getChat() {
-        return Promise.resolve(this.chat);
-      },
-    };
-  };
-
-  const getSiteCrawlerServiceMock = () => {
-    return {
-      sizes: [
-        { size: "XL", disabled: false },
-        { size: "XS", disabled: false },
-      ],
-      getData(link) {
-        if (link === "https://www.zara.com/ru/ru/mc.html")
-          return Promise.resolve({
-            type: "multicolors",
-            name: "mc",
-            colors: [
-              {
-                color: { name: "black" },
-                sizes: [
-                  { size: "XL", disabled: false },
-                  { size: "XS", disabled: false },
-                ]
-              },
-              {
-                color: { name: "white" },
-                sizes: [
-                  { size: "XL", disabled: false },
-                  { size: "XS", disabled: false },
-                ]
-              },
-            ],
-          });
-        if (link === "https://www.zara.com/ru/ru/1.html") return Promise.resolve({
-          type: "simple",
-          name: "1",
-          sizes: [
-            { size: "XL", disabled: false },
-            { size: "XS", disabled: false },
-          ],
-        })
-      },
-    };
-  };
-
   let service: LinkScannerService;
   let eventBus: EventBus;
-  let chatDataServiceMock: ReturnType<typeof getChatDataServiceMock>;
-  let siteCrawlerServiceMock: ReturnType<typeof getSiteCrawlerServiceMock>;
 
   beforeEach(async () => {
-    chatDataServiceMock = getChatDataServiceMock();
-    siteCrawlerServiceMock = getSiteCrawlerServiceMock();
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [
         LinkScannerService,
         LinkGenerator,
-        { provide: ChatDataService, useValue: chatDataServiceMock },
-        { provide: SiteCrawlerService, useValue: siteCrawlerServiceMock },
       ],
+    }).useMocker((token)=>{
+      if (typeof token === 'function') {
+        const mockMetadata = moduleMocker.getMetadata(token) as MockFunctionMetadata<any, any>;
+        const Mock = moduleMocker.generateFromMetadata(mockMetadata);
+        return new Mock();
+      }
     }).compile();
 
     service = module.get<LinkScannerService>(LinkScannerService);
-    eventBus = module.get<EventBus>(EventBus);
   });
 
   it("should be defined", () => {
@@ -122,32 +36,47 @@ describe("LinkScannerService", () => {
   });
 
   it("should return new size exist for simple page", async () => {
-    let event: NewSizeExist;
-    jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
-      event = e;
-    });
-    await service.checkLink("https://www.zara.com/ru/ru/1.html", 1);
+    const prevSizes =[{ size: "XL", disabled: true }]
+    const prevRes = {
+      name: 'qqq',
+      colors: [{
+        color: { name: 'COLOR1', code: '' },
+        sizes: prevSizes
+      }]
+    }
 
-    expect(event).toEqual(<NewSizeExist>{
-      chatId: 1,
-      link: "https://www.zara.com/ru/ru/1.html",
-      newSizes: ["XL"],
-    });
+
+const newSizes = [{ size: "XL", disabled: true }] 
+    const newRes = {
+      name: 'qqq',
+      colors: [{
+        color: { name: 'COLOR1', code: '' },
+        sizes: newSizes
+      }]
+    }
+
+    expect(service.isItemReturnOnSale({ color: "COLOR1", size: "XL" }, prevRes, newRes)).toBeFalsy()
+
+    prevSizes[0].disabled = true
+    newSizes[0].disabled = false
+    expect(service.isItemReturnOnSale({ color: "COLOR1", size: "XL" }, prevRes, newRes)).toBeTruthy()
+    expect(service.isItemReturnOnSale({ color: "COLOR2", size: "XL" }, prevRes, newRes)).toBeFalsy()
+
+    prevSizes[0].disabled = false
+    newSizes[0].disabled = true
+    expect(service.isItemReturnOnSale({ color: "COLOR1", size: "XL" }, prevRes, newRes)).toBeFalsy()
+    
+    prevSizes[0] = {size:"XL", disabled:undefined} 
+    newSizes[0] = {size:'XL', disabled: false}
+    expect(service.isItemReturnOnSale({ color: "COLOR1", size: "XL" }, prevRes, newRes)).toBeTruthy()
+    expect(service.isItemReturnOnSale({ color: "COLOR2", size: "XL" }, prevRes, newRes)).toBeFalsy()
+
+    prevSizes.length = 0
+    newSizes[0] = {size:'XL', disabled: false}
+    expect(service.isItemReturnOnSale({ color: "COLOR1", size: "XL" }, prevRes, newRes)).toBeTruthy()
+    expect(service.isItemReturnOnSale({ color: "COLOR2", size: "XL" }, prevRes, newRes)).toBeFalsy()
+
   })
 
-  it("should return new size exist for multicolor page", async () => {
-    let event: NewSizeExist;
-    jest.spyOn(eventBus, "publish").mockImplementation((e: NewSizeExist) => {
-      event = e;
-    });
-    await service.checkLink("https://www.zara.com/ru/ru/mc.html", 1);
 
-    expect(event).toEqual(<NewSizeExist>{
-      chatId: 1,
-      link: "https://www.zara.com/ru/ru/mc.html",
-      newSizes: ["black: XL"],
-    });
-  });
-
-  
 });

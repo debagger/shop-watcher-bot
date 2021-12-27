@@ -158,6 +158,8 @@ export class BrowserManagerService {
       context.activeRequestCancellers.forEach(source => source.cancel())
     })
 
+    
+
     await page.setRequestInterception(true);
 
     page.on('request', (request) => this.browserRequestInteceptor(request, context, page));

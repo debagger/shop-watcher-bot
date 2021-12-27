@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { ChatLinks } from "./chat-links.interface";
 import { ChatDataStorageInterface } from "./chat-data-storage.interface";
 import { InjectRepository } from "@nestjs/typeorm";
-import { ChatDataEntity } from "src/entities";
+import { ChatDataEntity } from "../entities";
 import { Repository } from "typeorm";
 
 @Injectable()

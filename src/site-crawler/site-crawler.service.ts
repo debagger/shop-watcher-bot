@@ -5,10 +5,8 @@ import { Page, HTTPResponse } from "puppeteer";
 
 import { LinkCheckResultMulticolors, Size, Color } from "../chat-data-storage/chat-links.interface";
 import { parse } from 'node-html-parser';
-import { BrowserManagerService } from "src/browser-manager/browser-manager.service";
+import { BrowserManagerService } from "../browser-manager/browser-manager.service";
 import { BrowseContext } from "./../browser-manager/browse-context.type";
-import { getEventListeners } from "events";
-import { ColdObservable } from "rxjs/internal/testing/ColdObservable";
 
 @Injectable()
 export class SiteCrawlerService {
@@ -162,27 +160,19 @@ export class SiteCrawlerService {
     return result;
   }
 
-  private prevTask: Promise<LinkCheckResultMulticolors>
+  private prevTask: Promise<any> = Promise.resolve()
 
   public getData(targetURL: string): Promise<LinkCheckResultMulticolors> {
     const task = new Promise<LinkCheckResultMulticolors>((resolve, reject) => {
-      if (this.prevTask) {
-        this.prevTask.finally(() => {
-          this.makeRequest(targetURL).then((res) => {
-            resolve(res)
-          }).catch((err) => {
-            reject(err)
-          })
-        })
-      }
-      else {
+      this.prevTask.finally(() => {
         this.makeRequest(targetURL).then((res) => {
           resolve(res)
         }).catch((err) => {
           reject(err)
         })
-      }
-    })
+      })
+    }
+    )
     this.prevTask = task
     return task
   }
