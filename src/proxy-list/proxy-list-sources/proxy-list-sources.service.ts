@@ -82,7 +82,7 @@ export class ProxyListSourcesService {
             return proxyList
         },
         'free-proxy.cz': async () => {
-            const targetURL = 'http://free-proxy.cz/ru/proxylist/country/all/socks/ping/all'
+            const targetURL = 'http://free-proxy.cz/ru/proxylist/country/all/socks4/ping/all'
 
             const browseContext: BrowseContext = {
                 url: targetURL,
