@@ -96,7 +96,10 @@ export class ProxyListSourcesService {
                 for (let index = 0; index < 10; index++) {
                     try {
                         resp1 = await page.goto(targetURL, { waitUntil: "networkidle2", timeout: 60000 });
-                        if (resp1?.status() === 200) { break }
+                        browseContext.activeRequestCancellers.forEach(canceler => canceler.cancel())
+                        if (resp1?.status() === 200) {
+                            break
+                        }
                         else {
                             this.logger.info(`Try #${index}. Proxy list source 'free-proxy.cz' response status ${resp1?.status()} (must be 200)`)
                         }
@@ -110,17 +113,22 @@ export class ProxyListSourcesService {
                 const result = await page.evaluate(() => {
                     return Array.from(document.querySelectorAll('#proxy_list >tbody >tr'))
                         .filter(tr => tr.children.length > 1)
-                        .map((tr:any) => `${tr.childNodes[0]?.innerText}:${tr.children[1]?.innerText}`)
+                        .map((tr: any) => `${tr.childNodes[0]?.innerText}:${tr.children[1]?.innerText}`)
                 })
 
                 const pagesLinks = await page.evaluate(() => {
-                    return Array.from(document.querySelector('.paginator').querySelectorAll('a')).map(a => ({ href: a.href, text: a.innerText }))
+                    return Array.from(document
+                        .querySelector('.paginator')
+                        .querySelectorAll('a'))
+                        .map(a => ({ href: a.href, text: a.innerText }))
+                        .filter(i => Number.isInteger(Number(i.text)))
                 })
-                for (const link of new Set(pagesLinks)) {
+                for (const link of pagesLinks) {
                     let pageResp: HTTPResponse
                     for (let index = 0; index < 10; index++) {
                         try {
                             pageResp = await page.goto(link.href, { waitUntil: "networkidle2", timeout: 60000 })
+                            browseContext.activeRequestCancellers.forEach(canceler => canceler.cancel())
                             if (pageResp?.status() === 200) break
                             this.logger.info(`Proxy list source 'free-proxy.cz'. Try #${index}.  page #${link.text} response status ${pageResp?.status()} (must be 200)`)
                         } catch (error) {
@@ -134,7 +142,7 @@ export class ProxyListSourcesService {
                     const pageResult = await page.evaluate(() => {
                         return Array.from(document.querySelectorAll('#proxy_list >tbody >tr'))
                             .filter(tr => tr.children.length > 1)
-                            .map((tr:any) => `${tr.children[0]?.innerText}:${tr.children[1]?.innerText}`)
+                            .map((tr: any) => `${tr.children[0]?.innerText}:${tr.children[1]?.innerText}`)
                     })
                     result.push(...pageResult)
                 }

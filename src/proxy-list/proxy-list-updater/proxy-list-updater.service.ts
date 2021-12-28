@@ -42,7 +42,7 @@ export class ProxyListUpdaterService {
 
             if (isTimeToUpdate) {
                 try {
-                    this.logger.info(`Begin update from proxy list source. Source name: "${sourceItem.name}"  `)
+                    this.logger.info(`Begin update from proxy list source. Source name: '${sourceItem.name}'  `)
                     await this.updateSource(sourceItem.id)
                 } catch (error) {
                     this.logger.error(error, `Proxy list web source update error. Source name: ${sourceItem.name}`)
