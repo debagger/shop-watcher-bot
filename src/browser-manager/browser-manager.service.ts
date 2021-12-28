@@ -20,7 +20,7 @@ export class BrowserManagerService {
     logger.setContext(BrowserManagerService.name);
   }
 
-  private readonly bestProxies: Record<string, { best: string[], blacklist: Set<string> }> = {}
+  public readonly bestProxies: Record<string, { best: string[], blacklist: Set<string> }> = {}
 
   private async getProxiedResponse(
     axiosRequestConfig: AxiosRequestConfig, browseContext: BrowseContext

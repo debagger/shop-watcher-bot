@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { PinoLogger } from 'nestjs-pino';
 import { parse } from 'node-html-parser';
-import {connect} from "puppeteer";
+import { connect, HTTPResponse } from "puppeteer";
+import { BrowseContext } from 'src/browser-manager/browse-context.type';
+import { BrowserManagerService } from 'src/browser-manager/browser-manager.service';
 
 const IPPortRegex = /(?<host>^[12]?\d{1,2}\.[12]?\d{1,2}\.[12]?\d{1,2}\.[12]?\d{1,2}):(?<port>\d{2,5})/
 
@@ -22,7 +24,9 @@ export type ProxyListExtractor = () => Promise<ProxyListExtractionResult>
 
 @Injectable()
 export class ProxyListSourcesService {
-    constructor(private logger: PinoLogger){}
+    constructor(
+        private readonly logger: PinoLogger,
+        private browserManager: BrowserManagerService) { }
     private sources: Record<string, ProxyListExtractor> = {
         "www.socks-proxy.net": async () => {
             const res = await axios.get('https://www.socks-proxy.net/');
@@ -78,37 +82,64 @@ export class ProxyListSourcesService {
             return proxyList
         },
         'free-proxy.cz': async () => {
-            const browser = await connect({
-                browserWSEndpoint: 'ws://chromium:3000?timeout=120000',
-                defaultViewport: { height: 1080, width: 1920 }
-            });
+            const targetURL = 'http://free-proxy.cz/ru/proxylist/country/all/socks/ping/all'
 
-            const page = await browser.newPage();
+            const browseContext: BrowseContext = {
+                url: targetURL,
+                activeRequestCancellers: new Set(),
+                isValidResponse(resp) {
+                    return true
+                }
+            }
+            return await this.browserManager.browse(browseContext, async (page) => {
+                let resp1: HTTPResponse
+                for (let index = 0; index < 10; index++) {
+                    try {
+                        resp1 = await page.goto(targetURL, { waitUntil: "networkidle2", timeout: 60000 });
+                        if (resp1?.status() === 200) { break }
+                        else {
+                            this.logger.info(`Try #${index}. Proxy list source 'free-proxy.cz' response status ${resp1?.status()} (must be 200)`)
+                        }
+                    } catch (error) {
+                        this.logger.info(`Try #${index}. Proxy list source 'free-proxy.cz' error ${error.message}`)
+                    }
+                }
 
-            const resp1 = await page.goto('http://free-proxy.cz/ru/proxylist/country/all/socks/ping/all', { waitUntil: "networkidle0", timeout: 30000 });
-            if (resp1.status() !== 200) throw Error(`Page return wrong status (${resp1.status()}). Must be 200.`)
+                if (resp1?.status() !== 200) throw Error(`Page return wrong status (${resp1.status()}). Must be 200.`)
 
-            const result = await page.evaluate(() => {
-                return Array.from(document.querySelectorAll('#proxy_list >tbody >tr'))
-                    .filter(tr => tr.children.length > 1)
-                    .map(tr => `${tr.childNodes[0]?.textContent}:${tr.children[1]?.textContent}`)
-            })
-
-            const pagesLinks = await page.evaluate(() => {
-                return Array.from(document.querySelector('.paginator').querySelectorAll('a')).map(a => a.href)
-            })
-            for (const link of new Set(pagesLinks)) {
-                await page.goto(link, { waitUntil: "domcontentloaded" })
-                const pageResult = await page.evaluate(() => {
+                const result = await page.evaluate(() => {
                     return Array.from(document.querySelectorAll('#proxy_list >tbody >tr'))
                         .filter(tr => tr.children.length > 1)
-                        .map(tr => `${tr.children[0]?.textContent}:${tr.children[1]?.textContent}`)
+                        .map((tr:any) => `${tr.childNodes[0]?.innerText}:${tr.children[1]?.innerText}`)
                 })
-                result.push(...pageResult)
-            }
-            await page.close()
-            browser.close()
-            return result
+
+                const pagesLinks = await page.evaluate(() => {
+                    return Array.from(document.querySelector('.paginator').querySelectorAll('a')).map(a => ({ href: a.href, text: a.innerText }))
+                })
+                for (const link of new Set(pagesLinks)) {
+                    let pageResp: HTTPResponse
+                    for (let index = 0; index < 10; index++) {
+                        try {
+                            pageResp = await page.goto(link.href, { waitUntil: "networkidle2", timeout: 60000 })
+                            if (pageResp?.status() === 200) break
+                            this.logger.info(`Proxy list source 'free-proxy.cz'. Try #${index}.  page #${link.text} response status ${pageResp?.status()} (must be 200)`)
+                        } catch (error) {
+                            this.logger.info(`Proxy list source 'free-proxy.cz'. Try #${index}.  page #${link.text} error ${error.message}`)
+                        }
+                    }
+                    if (pageResp?.status() !== 200) {
+                        this.logger.info(`Proxy list source 'free-proxy.cz'. Finally page #${link.text} response status ${pageResp?.status()} (must be 200)`)
+                        continue
+                    }
+                    const pageResult = await page.evaluate(() => {
+                        return Array.from(document.querySelectorAll('#proxy_list >tbody >tr'))
+                            .filter(tr => tr.children.length > 1)
+                            .map((tr:any) => `${tr.children[0]?.innerText}:${tr.children[1]?.innerText}`)
+                    })
+                    result.push(...pageResult)
+                }
+                return result
+            })
         }
     }
 
@@ -130,7 +161,7 @@ export class ProxyListSourcesService {
                 return result
             }))
 
-            this.logger.info(`Proxy list extraction from web sources completed.`)
+        this.logger.info(`Proxy list extraction from web sources completed.`)
         return extractionResult.reduce((acc, sourceResult) => {
             if (sourceResult.list) acc.list.push(...sourceResult.list)
             if (sourceResult.error) acc.errors[sourceResult.sourceName] = sourceResult.error

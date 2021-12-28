@@ -16,6 +16,8 @@ import { ProxyListModule } from './proxy-list/proxy-list.module';
 import * as Entities from './entities'
 import { env } from 'process'
 import { BrowserManagerModule } from './browser-manager/browser-manager.module';
+import { GraphQLModule } from '@nestjs/graphql';
+
 
 const mysqlConfigNames = {
   host: 'MYSQL_HOST',
@@ -70,6 +72,9 @@ const getDbConfigs = () => {
     LoggerModule.forRoot(),
     TelegramBotModule,
     ConfigModule.forRoot(),
+    GraphQLModule.forRoot({
+      autoSchemaFile: true,
+    }),
     FileDbModule,
     ChatDataModule,
     SiteCrawlerModule,

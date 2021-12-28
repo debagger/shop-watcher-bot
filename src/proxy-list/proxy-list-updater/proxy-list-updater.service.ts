@@ -26,7 +26,11 @@ export class ProxyListUpdaterService {
             }
             const updatesCount = await this.proxyListUpdatesRepo.count({ where: { source: { id: sourceItem.id } } })
             if (updatesCount > 0) {
-                const lastUpdateTime = (await this.proxyListUpdatesRepo.find({ select: ['updateTime'], order: { updateTime: 'DESC' }, take: 1 }))[0].updateTime
+                const lastUpdateTime = (await this.proxyListUpdatesRepo.find({ 
+                    select: ['updateTime'], 
+                    where:{source:{id:sourceItem.id}}, 
+                    order: { updateTime: 'DESC' }, 
+                    take: 1 }))[0].updateTime
                 const nowTime = new Date().getTime()
                 const secondsFromLastUpdate = (nowTime - lastUpdateTime.getTime()) / 1000
                 if (secondsFromLastUpdate > sourceItem.updateInterval) isTimeToUpdate = true

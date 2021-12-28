@@ -7,6 +7,12 @@ import { LinkCheckResultMulticolors, Size, Color } from "../chat-data-storage/ch
 import { parse } from 'node-html-parser';
 import { BrowserManagerService } from "../browser-manager/browser-manager.service";
 import { BrowseContext } from "./../browser-manager/browse-context.type";
+import { rightState } from "fp-ts/lib/StateReaderTaskEither";
+
+type SiteCrawlerTaskEntry = {
+  targetURL: string,
+  task: Promise<LinkCheckResultMulticolors>
+}
 
 @Injectable()
 export class SiteCrawlerService {
@@ -162,6 +168,14 @@ export class SiteCrawlerService {
 
   private prevTask: Promise<any> = Promise.resolve()
 
+  private pendingRequestsSet = new Set<SiteCrawlerTaskEntry>()
+
+  public getPendingRequests(): string[] {
+    const result = []
+    this.pendingRequestsSet.forEach(item => result.push(item.targetURL))
+    return result
+  }
+
   public getData(targetURL: string): Promise<LinkCheckResultMulticolors> {
     const task = new Promise<LinkCheckResultMulticolors>((resolve, reject) => {
       this.prevTask.finally(() => {
@@ -173,6 +187,10 @@ export class SiteCrawlerService {
       })
     }
     )
+    const taskEntry = { targetURL, task }
+
+    this.pendingRequestsSet.add(taskEntry)
+    task.finally(() => this.pendingRequestsSet.delete(taskEntry))
     this.prevTask = task
     return task
   }

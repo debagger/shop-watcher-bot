@@ -1,5 +1,6 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
+import { BrowserManagerModule } from "src/browser-manager/browser-manager.module";
 import {
   ProxyListSource,
   ProxyListUpdate,
@@ -12,7 +13,7 @@ import { ProxyListUpdaterService } from "./proxy-list-updater/proxy-list-updater
 import { ProxyTesterService } from "./proxy-tester/proxy-tester.service";
 
 @Module({
-  imports: [
+  imports: [ BrowserManagerModule,
     TypeOrmModule.forFeature([
       ProxyListSource,
       ProxyListUpdate,
