@@ -21,7 +21,7 @@ async function bootstrap() {
   adapter.use("/hookshot",
     hookshot('refs/heads/master', function (info) {
       const shell = process.env.SHELL;
-      const args = ['-c', "git pull && npm run build && pm2 restart all"];
+      const args = ['-c', "git pull && npm i && npm run build && cd client/ && npm i && npm run build && cd ../ && pm2 restart all"];
       logger.log(`ref ${info.ref} was pushed. Run ${shell} with ${args}`)
       spawn(shell, args, { stdio: 'inherit', detached: true })
     }))
