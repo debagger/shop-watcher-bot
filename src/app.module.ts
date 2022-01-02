@@ -17,7 +17,8 @@ import * as Entities from './entities'
 import { env } from 'process'
 import { BrowserManagerModule } from './browser-manager/browser-manager.module';
 import { GraphQLModule } from '@nestjs/graphql';
-
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 const mysqlConfigNames = {
   host: 'MYSQL_HOST',
@@ -68,6 +69,10 @@ const getDbConfigs = () => {
       // maxQueryExecutionTime: 1000,
       // logging: true,
       // logger: "file"
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client/dist/spa'),
+      exclude:["/graphql"]
     }),
     LoggerModule.forRoot(),
     TelegramBotModule,

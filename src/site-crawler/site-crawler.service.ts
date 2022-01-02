@@ -47,8 +47,7 @@ export class SiteCrawlerService {
   private async makeRequest(targetURL: string): Promise<LinkCheckResultMulticolors> {
 
     const browseContext: BrowseContext = {
-      url: targetURL,
-      activeRequestCancellers: new Set(),
+      activeRequests: new Set(),
       isValidResponse(resp) {
         if (resp.headers['content-type'].startsWith('text/html')) {
           try {
@@ -90,9 +89,9 @@ export class SiteCrawlerService {
         for (let i = 1; i <= 5; i++) {
           gotoResult = await page.goto(targetURL, { waitUntil: "domcontentloaded", timeout: 60000 });
 
-          console.log(`Navigation finished. Canceling ${browseContext.activeRequestCancellers.size} active requests`)
+          console.log(`Navigation finished. Canceling ${browseContext.activeRequests.size} active requests`)
 
-          browseContext.activeRequestCancellers.forEach(cancelSource => cancelSource.cancel())
+          browseContext.activeRequests.forEach(({canceTokenSource}) => canceTokenSource.cancel())
 
           if (!gotoResult) {
             console.log(`No result. Retry ${i}`)

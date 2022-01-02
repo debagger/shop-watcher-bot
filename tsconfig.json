@@ -14,5 +14,6 @@
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "dist", "frontend"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "client"]
 }

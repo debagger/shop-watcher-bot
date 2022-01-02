@@ -85,8 +85,7 @@ export class ProxyListSourcesService {
             const targetURL = 'http://free-proxy.cz/ru/proxylist/country/all/socks4/ping/all'
 
             const browseContext: BrowseContext = {
-                url: targetURL,
-                activeRequestCancellers: new Set(),
+                activeRequests: new Set(),
                 isValidResponse(resp) {
                     return true
                 }
@@ -96,7 +95,7 @@ export class ProxyListSourcesService {
                 for (let index = 0; index < 10; index++) {
                     try {
                         resp1 = await page.goto(targetURL, { waitUntil: "networkidle2", timeout: 60000 });
-                        browseContext.activeRequestCancellers.forEach(canceler => canceler.cancel())
+                        browseContext.activeRequests.forEach(({canceTokenSource}) => canceTokenSource.cancel())
                         if (resp1?.status() === 200) {
                             break
                         }
@@ -128,7 +127,7 @@ export class ProxyListSourcesService {
                     for (let index = 0; index < 10; index++) {
                         try {
                             pageResp = await page.goto(link.href, { waitUntil: "networkidle2", timeout: 60000 })
-                            browseContext.activeRequestCancellers.forEach(canceler => canceler.cancel())
+                            browseContext.activeRequests.forEach(({canceTokenSource}) => canceTokenSource.cancel())
                             if (pageResp?.status() === 200) break
                             this.logger.info(`Proxy list source 'free-proxy.cz'. Try #${index}.  page #${link.text} response status ${pageResp?.status()} (must be 200)`)
                         } catch (error) {

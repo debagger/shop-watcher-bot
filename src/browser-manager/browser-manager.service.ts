@@ -6,7 +6,7 @@ import { connect, Page, HTTPRequest } from "puppeteer";
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ProxyTestRun, ProxyListUpdate, Proxy } from './../entities';
 import { Repository } from 'typeorm';
-import { BrowseContext } from './browse-context.type';
+import { ActiveProxyRequestContext, BrowseContext } from './browse-context.type';
 import { performance } from 'perf_hooks'
 
 @Injectable()
@@ -76,19 +76,26 @@ export class BrowserManagerService {
         }
 
         const cancelSource = CancelToken.source();
+        const requestContext: ActiveProxyRequestContext = {
+          axiosRequestConfig: {
+            ...axiosRequestConfig,
+            httpAgent: agent,
+            httpsAgent: agent,
+            timeout: 10000,
+            cancelToken: cancelSource.token
+          },
+          canceTokenSource: cancelSource,
+          proxyUrl: proxyAddress,
+          url: axiosRequestConfig.url
 
-        browseContext.activeRequestCancellers.add(cancelSource)
+        }
+        browseContext.activeRequests.add(requestContext)
 
         sources.push(cancelSource);
         const start = performance.now()
-        const response = await axios({
-          ...axiosRequestConfig,
-          httpAgent: agent,
-          httpsAgent: agent,
-          timeout: 10000,
-          cancelToken: cancelSource.token
-        }).finally(() => {
-          browseContext.activeRequestCancellers.delete(cancelSource)
+        const response = await axios(requestContext.axiosRequestConfig)
+        .finally(() => {
+          browseContext.activeRequests.delete(requestContext)
         });
 
         if (browseContext.isValidResponse(response)) {
@@ -154,11 +161,11 @@ export class BrowserManagerService {
     const page = await browser.newPage();
 
     page.once('close', () => {
-      console.log(`Cancel ${context.activeRequestCancellers.size} active requests due to page close`)
-      context.activeRequestCancellers.forEach(source => source.cancel())
+      console.log(`Cancel ${context.activeRequests.size} active requests due to page close`)
+      context.activeRequests.forEach(requestContext => requestContext.canceTokenSource.cancel())
     })
 
-    
+
 
     await page.setRequestInterception(true);
 

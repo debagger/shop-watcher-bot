@@ -1,7 +1,14 @@
-import { AxiosResponse,  CancelTokenSource } from "axios";
+import { Axios, AxiosRequestConfig, AxiosResponse,  CancelTokenSource } from "axios";
+
+export type ActiveProxyRequestContext = {
+  url: string
+  proxyUrl: string
+  canceTokenSource: CancelTokenSource
+  axiosRequestConfig: AxiosRequestConfig
+}
+
 export type BrowseContext = {
-    url: string,
     isValidResponse: (response: AxiosResponse) => boolean
-    activeRequestCancellers: Set<CancelTokenSource>
+    activeRequests: Set<ActiveProxyRequestContext>
   }
   

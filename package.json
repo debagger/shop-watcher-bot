@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "nest build ",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -31,6 +31,7 @@
     "@nestjs/passport": "^8.0.1",
     "@nestjs/platform-express": "^8.2.3",
     "@nestjs/schedule": "^1.0.2",
+    "@nestjs/serve-static": "^2.2.2",
     "@nestjs/typeorm": "^8.0.2",
     "apollo-server-express": "^3.5.0",
     "axios": "^0.24.0",
