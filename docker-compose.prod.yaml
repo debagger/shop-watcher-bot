@@ -14,7 +14,8 @@ services:
       npm i && 
       npm run build && 
       cd client/ &&
-      npm run buid &&
+      npm i &&
+      npm run build &&
       cd ../ &&
       pm2 start &&
       pm2 logs app'
