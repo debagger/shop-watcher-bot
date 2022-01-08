@@ -50,16 +50,16 @@ import EssentialLink from 'components/EssentialLink.vue'
 
 const linksList = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
-    icon: 'school',
-    link: 'https://quasar.dev'
+    title: 'Browser proxyfing state',
+    caption: 'Pupeeteer proxy usage current state',
+    icon: 'web',
+    link: '/'
   },
   {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
+    title: 'Proxies',
+    caption: 'Database proxies Records',
     icon: 'code',
-    link: 'https://github.com/quasarframework'
+    link: '/proxies'
   },
   {
     title: 'Discord Chat Channel',

@@ -24,6 +24,5 @@ export default boot(({ app }) => {
     link: httpLink,
     cache,
   });
-  console.log('Provide appolo client!!!')
   app.provide(DefaultApolloClient, apolloClient);
 });

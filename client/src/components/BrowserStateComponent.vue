@@ -1,6 +1,6 @@
 <template>
-  <div class="row" v-if='result?.browserManagerState'>
-        <q-card class="col-3 q-ma-sm" v-for="host in result.browserManagerState.knownHosts" :key="host.hostName">
+  <div class="row" v-if='knownHosts'>
+        <q-card class="col-3 q-ma-sm" v-for="host in knownHosts" :key="host.hostName">
           <q-card-section>
                <p class="text-h6">{{host.hostName}}</p>
           </q-card-section>
@@ -18,8 +18,8 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, watch } from 'vue';
-import { useQuery } from '@vue/apollo-composable';
+import { defineComponent } from 'vue';
+import { useQuery, useResult } from '@vue/apollo-composable';
 import gql from 'graphql-tag';
 
 export default defineComponent({
@@ -40,10 +40,10 @@ export default defineComponent({
       }
     `, null, {pollInterval: 1000});
 
-    watch(result, (v)=>console.log(v))
+    const knownHosts = useResult(result,null, data=> data.browserManagerState.knownHosts )
 
     return {
-      result,
+      knownHosts
     };
   },
 });

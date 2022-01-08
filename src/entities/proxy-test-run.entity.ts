@@ -1,30 +1,45 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { Proxy, ProxyTestType } from ".";
-
+import { Field, Int, ObjectType } from "@nestjs/graphql";
+import { GraphQLJSON } from "graphql-scalars";
+@ObjectType()
 @Entity()
 export class ProxyTestRun {
-    @PrimaryGeneratedColumn()
-    id: number
+  @Field((type) => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column({ type: 'datetime' })
-    runTime: Date
+  @Field()
+  @Column({ type: "datetime" })
+  runTime: Date;
 
-    @Column('smallint')
-    protocol: 4 | 5
+  @Field()
+  @Column("smallint")
+  protocol: 4 | 5;
 
-    @ManyToOne(() => ProxyTestType, (testType) => testType.testRuns)
-    testType: ProxyTestType
+  @Field((type) => ProxyTestType)
+  @ManyToOne(() => ProxyTestType, (testType) => testType.testRuns)
+  testType: ProxyTestType;
 
-    @ManyToOne(() => Proxy, proxy => proxy.testsRuns)
-    testedProxy: Proxy
+  @Field((type) => Proxy)
+  @ManyToOne(() => Proxy, (proxy) => proxy.testsRuns)
+  testedProxy: Proxy;
 
-    @Column({ type: 'json', nullable: true })
-    okResult?: any
+  @Field((type) => GraphQLJSON)
+  @Column({ type: "json", nullable: true })
+  okResult?: any;
 
-    @Column({ type: 'json', nullable: true })
-    errorResult?: any
+  @Field((type) => GraphQLJSON)
+  @Column({ type: "json", nullable: true })
+  errorResult?: any;
 
-    @Column({ type: "int" })
-    duration_ms: number
-
+  @Field()
+  @Column({ type: "int" })
+  duration_ms: number;
 }

@@ -7,10 +7,14 @@ import {
   Proxy,
   ProxyTestRun,
   ProxyTestType,
+  ProxySourcesView,
 } from "src/entities";
 import { ProxyListSourcesService } from "./proxy-list-sources/proxy-list-sources.service";
 import { ProxyListUpdaterService } from "./proxy-list-updater/proxy-list-updater.service";
 import { ProxyTesterService } from "./proxy-tester/proxy-tester.service";
+import { ProxyListSourceResolver } from './proxy-list-source.resolver';
+import { ProxyResolver } from './proxy.resolver';
+import { ProxyListUpdateResolver } from './proxy-list-update.resolver';
 
 @Module({
   imports: [ BrowserManagerModule,
@@ -20,12 +24,16 @@ import { ProxyTesterService } from "./proxy-tester/proxy-tester.service";
       Proxy,
       ProxyTestRun,
       ProxyTestType,
+      ProxySourcesView
     ]),
   ],
   providers: [
     ProxyListSourcesService,
     ProxyListUpdaterService,
     ProxyTesterService,
+    ProxyListSourceResolver,
+    ProxyResolver,
+    ProxyListUpdateResolver,
   ],
 })
 export class ProxyListModule implements OnModuleInit {
@@ -35,7 +43,7 @@ export class ProxyListModule implements OnModuleInit {
   ) {}
   async onModuleInit() {
     // await this.proxyUpdater.updateSource(1)
-    await this.proxyUpdater.updateAllSources();
+    // await this.proxyUpdater.updateAllSources();
     // await this.proxyTester.checkAllProxies();
   }
 }
