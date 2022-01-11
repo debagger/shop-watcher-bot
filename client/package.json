@@ -7,6 +7,7 @@
   "private": true,
   "scripts": {
     "build": "quasar build",
+    "dev": "quasar dev",
     "lint": "eslint --ext .js,.ts,.vue ./",
     "test": "echo \"No test specified\" && exit 0"
   },
@@ -18,7 +19,9 @@
     "core-js": "^3.6.5",
     "graphql": "^16.2.0",
     "graphql-tag": "^2.12.6",
-    "quasar": "^2.0.0"
+    "quasar": "^2.0.0",
+    "ts-graphql-plugin": "^2.1.5",
+    "typescript": "^4.5.4"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.13.14",

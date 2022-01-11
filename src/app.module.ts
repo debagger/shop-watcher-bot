@@ -78,7 +78,7 @@ const getDbConfigs = () => {
     TelegramBotModule,
     ConfigModule.forRoot(),
     GraphQLModule.forRoot({
-      autoSchemaFile: true,
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
     }),
     FileDbModule,
     ChatDataModule,

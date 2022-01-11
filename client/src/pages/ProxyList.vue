@@ -11,7 +11,7 @@
         <q-td :props="props">
           <ul>
             <li v-for="sourceItem in props.row.sources" :key="sourceItem">
-              {{sourceItem.source.name}}
+              {{ sourceItem.source.name }}
             </li>
           </ul>
         </q-td>
@@ -20,38 +20,22 @@
   </q-page>
 </template>
 
-<script>
+<script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
-import { useQuery } from '@vue/apollo-composable';
-import gql from 'graphql-tag';
 
-const query = gql`
-  query ($page: Int!, $rowsPerPage: Int!) {
-    proxiesPage(page: $page, rowsPerPage: $rowsPerPage) {
-      pagination {
-        page
-        rowsPerPage
-        rowsNumber
-      }
-      rows {
-        id
-        host
-        port
-        sources {
-          source {
-            name
-          }
-          firstUpdate {
-            updateTime
-          }
-          lastUpdate {
-            updateTime
-          }
-        }
-      }
-    }
-  }
-`;
+import { useQuery } from '@vue/apollo-composable';
+import { QTable } from 'quasar';
+import { proxiesPageQuery } from '../queries';
+import {
+  getProxiesPage,
+  getProxiesPageVariables,
+} from '../__generated__/get-proxies-page';
+import {PropType, ReturnAsyncType} from '../type.tools'
+
+
+type OnRequestType = PropType<QTable, 'requestServerInteraction'>;
+
+
 
 export default defineComponent({
   setup() {
@@ -62,35 +46,44 @@ export default defineComponent({
       { name: 'sources', label: 'Sources' },
     ];
     const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
-    const rows = ref([]);
+    const rows = ref<getProxiesPage['proxiesPage']['rows']>([]);
 
-    const { onResult, loading, variables, refetch } = useQuery(query, {
-      page: 1,
-      rowsPerPage: 10,
-    });
+    const { onResult, loading, variables, refetch } = useQuery<getProxiesPage>(
+      proxiesPageQuery,
+      {
+        page: 1,
+        rowsPerPage: 10,
+      } as getProxiesPageVariables
+    );
 
-    function onRequest(props) {
-      variables.value = {
-        page: props.pagination.page,
-        rowsPerPage: props.pagination.rowsPerPage,
-      };
-      pagination.value.page = props.pagination.page;
-      pagination.value.rowsPerPage = props.pagination.rowsPerPage;
-    }
+    const onRequest: OnRequestType = (props) => {
+      if (props?.pagination?.page && props?.pagination?.rowsPerPage) {
+        variables.value = {
+          page: props.pagination.page,
+          rowsPerPage: props.pagination.rowsPerPage,
+        };
+        pagination.value.page = props.pagination.page;
+        pagination.value.rowsPerPage = props.pagination.rowsPerPage;
+      }
+    };
 
-    function update({ loading, data }) {
+    type RefetchReturnType = ReturnAsyncType<typeof refetch>;
+
+    const update: (arg: RefetchReturnType) => void = ({ loading, data }) => {
       if (loading) return;
       pagination.value.rowsNumber = data.proxiesPage.pagination.rowsNumber;
       rows.value = data.proxiesPage.rows;
-    }
+    };
 
     onResult(update);
 
     onMounted(async () => {
       loading.value = true;
-      update(
-        await refetch(variables.value).finally(() => (loading.value = false))
-      );
+      const refetchPromise = refetch(variables.value);
+      if (refetchPromise) {
+        const res = await refetchPromise.finally(() => (loading.value = false));
+        update(res);
+      }
     });
     return { columns, rows, pagination, loading, onRequest };
   },

@@ -20,16 +20,16 @@ export class KnownHostsResolver {
     @ResolveField('proxiesBestList', returns => [BestProxyItemModel])
     proxiesBestList(@Parent() knownHost: KnownHostModel) {
         const hostData = this.browserManagerService.bestProxies[knownHost.hostName];
-        const aggreated = hostData.best.reduce((acc, item) => {
+        const aggregated = hostData.best.reduce((acc, item) => {
             acc[item] ? acc[item]++ : acc[item] = 1
             return acc
         }, {})
-        const result = Object.keys(aggreated).map(proxyAddr => {
+        const result = Object.keys(aggregated).map(proxyAddr => {
             const item = new BestProxyItemModel()
-            item.rating = aggreated[proxyAddr]
+            item.rating = aggregated[proxyAddr]
             item.proxyAddress = proxyAddr
             return item
-        })
+        }).sort((a,b)=>b.rating-a.rating)
         return result
     }
 
