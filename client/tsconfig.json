@@ -1,16 +1,6 @@
 {
   "extends": "@quasar/app/tsconfig-preset",
   "compilerOptions": {
-    "baseUrl": ".",
-    "plugins": [
-      {
-        "name": "ts-graphql-plugin",
-        "schema": "../src/schema.gql",
-        "tag": "gql",
-        "typegen": {
-          "addons": ["ts-graphql-plugin/addons/typed-query-document"]
-        }
-      }
-    ]
+    "baseUrl": "."
   }
 }

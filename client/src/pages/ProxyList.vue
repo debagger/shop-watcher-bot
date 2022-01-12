@@ -23,19 +23,11 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 
-import { useQuery } from '@vue/apollo-composable';
 import { QTable } from 'quasar';
-import { proxiesPageQuery } from '../queries';
-import {
-  getProxiesPage,
-  getProxiesPageVariables,
-} from '../__generated__/get-proxies-page';
-import {PropType, ReturnAsyncType} from '../type.tools'
-
+import { useGetProxiesPageQuery, GetProxiesPageQuery } from '../graphql';
+import { PropType, ReturnAsyncType } from '../type.tools';
 
 type OnRequestType = PropType<QTable, 'requestServerInteraction'>;
-
-
 
 export default defineComponent({
   setup() {
@@ -46,15 +38,13 @@ export default defineComponent({
       { name: 'sources', label: 'Sources' },
     ];
     const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
-    const rows = ref<getProxiesPage['proxiesPage']['rows']>([]);
+    const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
 
-    const { onResult, loading, variables, refetch } = useQuery<getProxiesPage>(
-      proxiesPageQuery,
-      {
+    const { onResult, loading, variables, refetch } =
+      useGetProxiesPageQuery({
         page: 1,
         rowsPerPage: 10,
-      } as getProxiesPageVariables
-    );
+      });
 
     const onRequest: OnRequestType = (props) => {
       if (props?.pagination?.page && props?.pagination?.rowsPerPage) {

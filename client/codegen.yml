@@ -1,0 +1,15 @@
+overwrite: true
+schema: './../src/schema.gql'
+documents: './src/queries.ts'
+generates:
+  src/graphql.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+      - 'typescript-document-nodes'
+      - 'typescript-vue-apollo':
+          vueCompositionApiImportFrom: vue
+      # - "fragment-matcher"
+  # ./graphql.schema.json:
+  #   plugins:
+  #     - "introspection"

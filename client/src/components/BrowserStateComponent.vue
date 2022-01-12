@@ -31,23 +31,18 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { useQuery, useResult } from '@vue/apollo-composable';
-import { knownHostsQuery } from '../queries';
-import { knownHosts } from '../__generated__/known-hosts';
-import {Unpacked} from '../type.tools'
-
-
-type knownHostType = Unpacked<knownHosts['browserManagerState']['knownHosts']>;
-
+import { useResult } from '@vue/apollo-composable';
+import {useKnownHostsQuery, KnownHostModel} from '../graphql'
+// import {Unpacked} from '../type.tools'
 
 export default defineComponent({
   name: 'CompositionComponent',
   setup() {
-    const { result } = useQuery<knownHosts>(knownHostsQuery, null, {
+    const { result } = useKnownHostsQuery({
       pollInterval: 1000,
     });
 
-    const sumRate = (host: knownHostType) =>
+    const sumRate = (host: KnownHostModel) =>
       host.proxiesBestList?host.proxiesBestList.reduce(
         (acc: number, item) => (acc += item.rating),
         0
