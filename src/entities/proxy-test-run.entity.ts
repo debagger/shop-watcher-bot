@@ -31,11 +31,11 @@ export class ProxyTestRun {
   @ManyToOne(() => Proxy, (proxy) => proxy.testsRuns)
   testedProxy: Proxy;
 
-  @Field((type) => GraphQLJSON)
+  @Field((type) => GraphQLJSON, {nullable: true})
   @Column({ type: "json", nullable: true })
   okResult?: any;
 
-  @Field((type) => GraphQLJSON)
+  @Field((type) => GraphQLJSON, {nullable: true})
   @Column({ type: "json", nullable: true })
   errorResult?: any;
 

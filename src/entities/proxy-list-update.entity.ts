@@ -3,6 +3,7 @@ import { ProxyListSource } from './proxy-list-source.entity'
 import { Proxy } from './proxy.entity'
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { GraphQLJSON } from "graphql-scalars";
+import { ApplicationError } from 'src/AppError.class';
 
 @ObjectType()
 @Entity()
@@ -26,6 +27,6 @@ export class ProxyListUpdate {
 
     @Field(type=>GraphQLJSON, {nullable: true})
     @Column('json', { nullable: true })
-    error?: Error | Error[]
+    error?: ApplicationError | ApplicationError[]
 
 }

@@ -45,8 +45,8 @@ type ProxyTestRun {
   protocol: Float!
   testType: ProxyTestType!
   testedProxy: Proxy!
-  okResult: JSON!
-  errorResult: JSON!
+  okResult: JSON
+  errorResult: JSON
   duration_ms: Float!
 }
 
@@ -81,6 +81,11 @@ type SiteCrawlerState {
   pendingRequests: [String!]!
 }
 
+type WorkerResult {
+  workerId: Int!
+  result: ProxyTestRun!
+}
+
 type Pagination {
   page: Int!
   rowsPerPage: Int!
@@ -92,6 +97,19 @@ type PaginatedProxy {
   rows: [Proxy!]!
 }
 
+type ProxyTesterWorkerTask {
+  host: String!
+  port: Int!
+  protocol: String!
+  name: String!
+}
+
+type ProxyTesterWorkerState {
+  workerId: Int!
+  currentTask: ProxyTesterWorkerTask
+  workers: [ProxyTesterWorkerState!]!
+}
+
 type Query {
   state: SiteCrawlerState!
   browserManagerState: BrowserManagerModel!
@@ -100,4 +118,15 @@ type Query {
   proxiesPage(rowsPerPage: Int!, page: Int!): PaginatedProxy!
   proxiesCount: Int!
   proxyListUpdates(skip: Int!, take: Int!): [ProxyListUpdate!]!
+  proxyTesterWorkerState: ProxyTesterWorkerState!
+}
+
+type Mutation {
+  runSourceUpdate(sourceId: Int!): JSON!
+  run: Boolean!
+  stop: Boolean!
+}
+
+type Subscription {
+  onTaskFinish: WorkerResult!
 }

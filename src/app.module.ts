@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
@@ -74,11 +74,12 @@ const getDbConfigs = () => {
       rootPath: join(__dirname, '..', 'client/dist/spa'),
       exclude:["/graphql"]
     }),
-    LoggerModule.forRoot(),
+    LoggerModule.forRoot({exclude:[{method:RequestMethod.ALL, path:'/graphql'}]}),
     TelegramBotModule,
     ConfigModule.forRoot(),
     GraphQLModule.forRoot({
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      installSubscriptionHandlers: true,
     }),
     FileDbModule,
     ChatDataModule,

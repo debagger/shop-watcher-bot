@@ -62,10 +62,10 @@ const linksList = [
     link: '/proxies'
   },
   {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
+    title: 'Proxy Tester',
+    caption: 'Proxies tester module',
     icon: 'chat',
-    link: 'https://chat.quasar.dev'
+    link: '/proxy-tester'
   },
   {
     title: 'Forum',

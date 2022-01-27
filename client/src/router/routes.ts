@@ -6,7 +6,9 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/Index.vue') },
-    { path: 'proxies', component: () => import('pages/ProxyList.vue') }],
+      { path: 'proxies', component: () => import('pages/ProxyList.vue') },
+      { path: 'proxy-tester', component: () => import('pages/ProxyTester.vue') },
+    ],
   },
 
   // Always leave this as last one,

@@ -10,5 +10,7 @@ export type ActiveProxyRequestContext = {
 export type BrowseContext = {
     isValidResponse: (response: AxiosResponse) => boolean
     activeRequests: Set<ActiveProxyRequestContext>
+    predefinedProxiesAddresses?: string[]
+    incognito?: boolean
   }
   

@@ -38,6 +38,18 @@ export type KnownHostModel = {
   proxiesBlackList?: Maybe<Array<Scalars['String']>>;
 };
 
+export type Mutation = {
+  __typename?: 'Mutation';
+  run: Scalars['Boolean'];
+  runSourceUpdate: Scalars['JSON'];
+  stop: Scalars['Boolean'];
+};
+
+
+export type MutationRunSourceUpdateArgs = {
+  sourceId: Scalars['Int'];
+};
+
 export type PaginatedProxy = {
   __typename?: 'PaginatedProxy';
   pagination: Pagination;
@@ -91,9 +103,9 @@ export type ProxySourcesView = {
 export type ProxyTestRun = {
   __typename?: 'ProxyTestRun';
   duration_ms: Scalars['Float'];
-  errorResult: Scalars['JSON'];
+  errorResult?: Maybe<Scalars['JSON']>;
   id: Scalars['Int'];
-  okResult: Scalars['JSON'];
+  okResult?: Maybe<Scalars['JSON']>;
   protocol: Scalars['Float'];
   runTime: Scalars['DateTime'];
   testType: ProxyTestType;
@@ -107,6 +119,21 @@ export type ProxyTestType = {
   testRuns: Array<ProxyTestRun>;
 };
 
+export type ProxyTesterWorkerState = {
+  __typename?: 'ProxyTesterWorkerState';
+  currentTask?: Maybe<ProxyTesterWorkerTask>;
+  workerId: Scalars['Int'];
+  workers: Array<ProxyTesterWorkerState>;
+};
+
+export type ProxyTesterWorkerTask = {
+  __typename?: 'ProxyTesterWorkerTask';
+  host: Scalars['String'];
+  name: Scalars['String'];
+  port: Scalars['Int'];
+  protocol: Scalars['String'];
+};
+
 export type Query = {
   __typename?: 'Query';
   browserManagerState: BrowserManagerModel;
@@ -115,6 +142,7 @@ export type Query = {
   proxiesPage: PaginatedProxy;
   proxyListSources: Array<ProxyListSource>;
   proxyListUpdates: Array<ProxyListUpdate>;
+  proxyTesterWorkerState: ProxyTesterWorkerState;
   state: SiteCrawlerState;
 };
 
@@ -147,6 +175,17 @@ export type SiteCrawlerState = {
   pendingRequests: Array<Scalars['String']>;
 };
 
+export type Subscription = {
+  __typename?: 'Subscription';
+  onTaskFinish: WorkerResult;
+};
+
+export type WorkerResult = {
+  __typename?: 'WorkerResult';
+  result: ProxyTestRun;
+  workerId: Scalars['Int'];
+};
+
 export type GetProxiesPageQueryVariables = Exact<{
   page: Scalars['Int'];
   rowsPerPage: Scalars['Int'];
@@ -159,6 +198,16 @@ export type KnownHostsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type KnownHostsQuery = { __typename?: 'Query', browserManagerState: { __typename?: 'BrowserManagerModel', knownHosts: Array<{ __typename?: 'KnownHostModel', hostName: string, proxiesBlackList?: Array<string> | null | undefined, proxiesBestList?: Array<{ __typename?: 'BestProxyItemModel', proxyAddress: string, rating: number }> | null | undefined }> } };
+
+export type ProxyTesterWorkerStateQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ProxyTesterWorkerStateQuery = { __typename?: 'Query', proxyTesterWorkerState: { __typename?: 'ProxyTesterWorkerState', workers: Array<{ __typename?: 'ProxyTesterWorkerState', workerId: number, currentTask?: { __typename?: 'ProxyTesterWorkerTask', host: string, port: number, protocol: string, name: string } | null | undefined }> } };
+
+export type WorkerTaskFinishSubscriptionVariables = Exact<{ [key: string]: never; }>;
+
+
+export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result: { __typename?: 'ProxyTestRun', okResult?: any | null | undefined, errorResult?: any | null | undefined, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } } };
 
 
 export const GetProxiesPage = gql`
@@ -197,6 +246,44 @@ export const KnownHosts = gql`
       proxiesBestList {
         proxyAddress
         rating
+      }
+    }
+  }
+}
+    `;
+export const ProxyTesterWorkerState = gql`
+    query proxyTesterWorkerState {
+  proxyTesterWorkerState {
+    workers {
+      workerId
+      currentTask {
+        host
+        port
+        protocol
+        name
+      }
+    }
+  }
+}
+    `;
+export const WorkerTaskFinish = gql`
+    subscription WorkerTaskFinish {
+  onTaskFinish {
+    workerId
+    result {
+      okResult
+      errorResult
+      runTime
+      duration_ms
+      protocol
+      id
+      testType {
+        name
+      }
+      testedProxy {
+        id
+        host
+        port
       }
     }
   }
@@ -282,3 +369,75 @@ export function useKnownHostsQuery(options: VueApolloComposable.UseQueryOptions<
   return VueApolloComposable.useQuery<KnownHostsQuery, KnownHostsQueryVariables>(KnownHostsDocument, {}, options);
 }
 export type KnownHostsQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<KnownHostsQuery, KnownHostsQueryVariables>;
+export const ProxyTesterWorkerStateDocument = gql`
+    query proxyTesterWorkerState {
+  proxyTesterWorkerState {
+    workers {
+      workerId
+      currentTask {
+        host
+        port
+        protocol
+        name
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useProxyTesterWorkerStateQuery__
+ *
+ * To run a query within a Vue component, call `useProxyTesterWorkerStateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProxyTesterWorkerStateQuery` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/query.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useProxyTesterWorkerStateQuery();
+ */
+export function useProxyTesterWorkerStateQuery(options: VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> = {}) {
+  return VueApolloComposable.useQuery<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>(ProxyTesterWorkerStateDocument, {}, options);
+}
+export type ProxyTesterWorkerStateQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>;
+export const WorkerTaskFinishDocument = gql`
+    subscription WorkerTaskFinish {
+  onTaskFinish {
+    workerId
+    result {
+      okResult
+      errorResult
+      runTime
+      duration_ms
+      protocol
+      id
+      testType {
+        name
+      }
+      testedProxy {
+        id
+        host
+        port
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useWorkerTaskFinishSubscription__
+ *
+ * To run a query within a Vue component, call `useWorkerTaskFinishSubscription` and pass it any options that fit your needs.
+ * When your component renders, `useWorkerTaskFinishSubscription` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param options that will be passed into the subscription, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/subscription.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useWorkerTaskFinishSubscription();
+ */
+export function useWorkerTaskFinishSubscription(options: VueApolloComposable.UseSubscriptionOptions<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables> | VueCompositionApi.Ref<VueApolloComposable.UseSubscriptionOptions<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>> | ReactiveFunction<VueApolloComposable.UseSubscriptionOptions<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>> = {}) {
+  return VueApolloComposable.useSubscription<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>(WorkerTaskFinishDocument, {}, options);
+}
+export type WorkerTaskFinishSubscriptionCompositionFunctionResult = VueApolloComposable.UseSubscriptionReturn<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>;

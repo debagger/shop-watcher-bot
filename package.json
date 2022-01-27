@@ -43,6 +43,7 @@
     "fstb": "^1.0.0",
     "graphql": "^15.8.0",
     "graphql-scalars": "^1.14.1",
+    "graphql-subscriptions": "^2.0.0",
     "hookshot": "^0.1.0",
     "jest-mock": "^27.4.2",
     "mysql": "^2.18.1",

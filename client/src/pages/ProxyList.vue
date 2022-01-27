@@ -9,11 +9,17 @@
     >
       <template v-slot:body-cell-sources="props">
         <q-td :props="props">
-          <ul>
-            <li v-for="sourceItem in props.row.sources" :key="sourceItem">
-              {{ sourceItem.source.name }}
-            </li>
-          </ul>
+          <q-list dense>
+            <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
+              <q-item-section>
+              <q-item-label overline>{{ sourceItem.source.name.toUpperCase() }} </q-item-label>
+              <q-item-label>
+                <q-badge>{{date.formatDate(sourceItem.firstUpdate.updateTime, "YYYY-MM-DD HH:mm:ss")}}</q-badge>-<q-badge>{{date.formatDate(sourceItem.lastUpdate.updateTime, "YYYY-MM-DD HH:mm:ss")}}</q-badge>
+
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
         </q-td>
       </template>
     </q-table>
@@ -23,7 +29,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue';
 
-import { QTable } from 'quasar';
+import { QTable, date } from 'quasar';
 import { useGetProxiesPageQuery, GetProxiesPageQuery } from '../graphql';
 import { PropType, ReturnAsyncType } from '../type.tools';
 
@@ -35,7 +41,7 @@ export default defineComponent({
       { name: 'id', label: 'id', field: 'id' },
       { name: 'host', label: 'host', field: 'host' },
       { name: 'port', label: 'port', field: 'port' },
-      { name: 'sources', label: 'Sources' },
+      { name: 'sources', label: 'Sources', align:'left' },
     ];
     const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
     const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
@@ -75,7 +81,7 @@ export default defineComponent({
         update(res);
       }
     });
-    return { columns, rows, pagination, loading, onRequest };
+    return { columns, rows, pagination, loading, onRequest, date, tz:Intl.DateTimeFormat().resolvedOptions().timeZone };
   },
 });
 </script>
