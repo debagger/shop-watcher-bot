@@ -68,7 +68,9 @@ export class ProxyListSourcesService {
     "spys.one": async () => {
       const successTests = await this.proxyTestRunRepo.find({
         where: { okResult: Not(IsNull()), testType: { name: "checkSpysOne" } },
-        relations:['testedProxy', 'testType']
+        order:{runTime:'DESC'},
+        relations:['testedProxy', 'testType'],
+        take:30
       });
 
       const predefinedProxiesAddresses = successTests.map(tr=>`socks${tr.protocol}://${tr.testedProxy.host}:${tr.testedProxy.port}`)
@@ -128,12 +130,22 @@ export class ProxyListSourcesService {
       const targetURL =
         "http://free-proxy.cz/ru/proxylist/country/all/socks4/ping/all";
 
+        const successTests = await this.proxyTestRunRepo.find({
+          where: { okResult: Not(IsNull()), testType: { name: "establishConnectionTest" } },
+          order:{runTime:'DESC'},
+          relations:['testedProxy', 'testType'],
+          take: 30
+        });
+
+        const predefinedProxiesAddresses = successTests.map(tr=>`socks${tr.protocol}://${tr.testedProxy.host}:${tr.testedProxy.port}`)
+        
       const browseContext: BrowseContext = {
         activeRequests: new Set(),
         isValidResponse(resp) {
           return true;
         },
-        incognito: true
+        incognito: true,
+        predefinedProxiesAddresses
       };
       return await this.browserManager.browse(browseContext, async (page) => {
         page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36');
@@ -141,7 +153,7 @@ export class ProxyListSourcesService {
         for (let index = 0; index < 10; index++) {
           try {
             resp1 = await page.goto(targetURL, {
-              waitUntil: "networkidle2",
+              waitUntil: "domcontentloaded",
               timeout: 60000,
             });
             browseContext.activeRequests.forEach(({ canceTokenSource }) =>
@@ -187,7 +199,7 @@ export class ProxyListSourcesService {
           for (let index = 0; index < 10; index++) {
             try {
               pageResp = await page.goto(link.href, {
-                waitUntil: "networkidle2",
+                waitUntil: "domcontentloaded",
                 timeout: 60000,
               });
               browseContext.activeRequests.forEach(({ canceTokenSource }) =>

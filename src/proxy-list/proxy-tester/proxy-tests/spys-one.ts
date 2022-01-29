@@ -8,5 +8,4 @@ export const checkSpysOne: ProxyTestType = async function (options: ProxyTestArg
         ...options,
         ...checkResult
     }
-
 }

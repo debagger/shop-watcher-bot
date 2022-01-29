@@ -113,7 +113,7 @@ type ProxyTesterWorkerState {
 type Query {
   state: SiteCrawlerState!
   browserManagerState: BrowserManagerModel!
-  proxyListSources(skip: Int!, take: Int!): [ProxyListSource!]!
+  proxyListSources: [ProxyListSource!]!
   proxies(skip: Int!, take: Int!): [Proxy!]!
   proxiesPage(rowsPerPage: Int!, page: Int!): PaginatedProxy!
   proxiesCount: Int!

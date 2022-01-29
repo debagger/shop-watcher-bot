@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-xl row items-start q-gutter-md">
-    <div :class="['col-md-6', item.result.okResult?'bg-light-green-2':'bg-red-2', 'q-ma-none', 'text-body2']"  v-for="item in finishedTasks" :key="item">
+    <div :class="['col-md-12', item.result.okResult?'bg-light-green-2':'bg-red-2', 'q-ma-none', 'text-body2']"  v-for="item in finishedTasks" :key="item">
        workerId: [{{item.workerId}}] {{item.result.testType.name}} {{`socks${item.result.protocol}://${item.result.testedProxy.host}:${item.result.testedProxy.port}`}} {{`${item.result.okResult?'OK':item.result.errorResult.message}`}}
     </div>
 
@@ -40,8 +40,7 @@ export default defineComponent({
     const { result: tfresult } = useWorkerTaskFinishSubscription();
     const taskFinished = useResult(tfresult, null, (r) => r.onTaskFinish);
     const finishedTasks = ref<any[]>([]);
-    watch(taskFinished, (task) => {
-        
+    watch(taskFinished, (task) => {       
       if (task) finishedTasks.value.push(task);
       if(finishedTasks.value.length>10) finishedTasks.value.shift()
     });

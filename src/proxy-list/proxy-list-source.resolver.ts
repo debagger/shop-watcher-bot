@@ -24,14 +24,9 @@ export class ProxyListSourceResolver {
     private readonly proxyListUpdater: ProxyListUpdaterService
   ) {}
   @Query((returns) => [ProxyListSource])
-  async proxyListSources(
-    @Args("take", { type: () => Int }) take: number,
-    @Args("skip", { type: () => Int }) skip: number
-  ) {
+  async proxyListSources() {
     return await this.proxyListSourceRepo.find({
-      take,
-      skip,
-      order: { id: "ASC" },
+      order: { name: "ASC" },
     });
   }
 
