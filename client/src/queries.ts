@@ -82,3 +82,53 @@ export const workerTaskFinish = gql`
     }
   }
 `;
+
+export const proxyListSourcesWithLastUpdate = gql`
+  query ProxyListSourcesWithLastUpdate {
+    proxyListSources {
+      id
+      name
+      updateInterval
+      lastUpdate {
+        updateTime
+        newProxiesCount
+        error
+        newProxies {
+          id
+          host
+          port
+        }
+      }
+    }
+  }
+`;
+export const telegramUsers = gql`
+  query telegramUsers {
+    telegramUsers {
+      id
+      first_name
+      username
+    }
+  }
+`;
+
+export const telegramUser = gql`
+  query TelegramUser($userId: Int!, $take: Int!, $skip: Int!) {
+    telegramUser(userId: $userId) {
+      id
+      first_name
+      username
+      dialogs(take: $take, skip: $skip) {
+        id
+        inputMessage
+        startTime
+        answers {
+          id
+          answerTime
+          text
+          extra
+        }
+      }
+    }
+  }
+`;

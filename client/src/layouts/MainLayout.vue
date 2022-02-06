@@ -68,16 +68,16 @@ const linksList = [
     link: '/proxy-tester'
   },
   {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
+    title: 'Proxy List Sources',
+    caption: 'Sources of proxy lists',
     icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
+    link: '/proxy-list-sources'
   },
   {
-    title: 'Twitter',
-    caption: '@quasarframework',
+    title: 'Bot users',
+    caption: 'Users conversations with bot',
     icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
+    link: '/bot-users'
   },
   {
     title: 'Facebook',

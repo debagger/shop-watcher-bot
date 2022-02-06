@@ -144,6 +144,8 @@ export type Query = {
   proxyListUpdates: Array<ProxyListUpdate>;
   proxyTesterWorkerState: ProxyTesterWorkerState;
   state: SiteCrawlerState;
+  telegramUser: TelegramChatUser;
+  telegramUsers: Array<TelegramChatUser>;
 };
 
 
@@ -159,15 +161,14 @@ export type QueryProxiesPageArgs = {
 };
 
 
-export type QueryProxyListSourcesArgs = {
+export type QueryProxyListUpdatesArgs = {
   skip: Scalars['Int'];
   take: Scalars['Int'];
 };
 
 
-export type QueryProxyListUpdatesArgs = {
-  skip: Scalars['Int'];
-  take: Scalars['Int'];
+export type QueryTelegramUserArgs = {
+  userId: Scalars['Int'];
 };
 
 export type SiteCrawlerState = {
@@ -178,6 +179,41 @@ export type SiteCrawlerState = {
 export type Subscription = {
   __typename?: 'Subscription';
   onTaskFinish: WorkerResult;
+};
+
+export type TelegramBotAnswer = {
+  __typename?: 'TelegramBotAnswer';
+  answerTime: Scalars['DateTime'];
+  extra?: Maybe<Scalars['JSON']>;
+  id: Scalars['Int'];
+  text: Scalars['String'];
+};
+
+export type TelegramChatDialog = {
+  __typename?: 'TelegramChatDialog';
+  answers?: Maybe<Array<TelegramBotAnswer>>;
+  chatId: Scalars['Int'];
+  from: TelegramChatUser;
+  id: Scalars['Int'];
+  inputMessage: Scalars['String'];
+  startTime: Scalars['DateTime'];
+};
+
+export type TelegramChatUser = {
+  __typename?: 'TelegramChatUser';
+  dialogs: Array<TelegramChatDialog>;
+  first_name: Scalars['String'];
+  id: Scalars['Int'];
+  is_bot: Scalars['Boolean'];
+  language_code?: Maybe<Scalars['String']>;
+  last_name?: Maybe<Scalars['String']>;
+  username?: Maybe<Scalars['String']>;
+};
+
+
+export type TelegramChatUserDialogsArgs = {
+  skip: Scalars['Int'];
+  take: Scalars['Int'];
 };
 
 export type WorkerResult = {
@@ -208,6 +244,25 @@ export type WorkerTaskFinishSubscriptionVariables = Exact<{ [key: string]: never
 
 
 export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result: { __typename?: 'ProxyTestRun', okResult?: any | null | undefined, errorResult?: any | null | undefined, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } } };
+
+export type ProxyListSourcesWithLastUpdateQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ProxyListSourcesWithLastUpdateQuery = { __typename?: 'Query', proxyListSources: Array<{ __typename?: 'ProxyListSource', id: number, name: string, updateInterval: number, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any, newProxiesCount: number, error?: any | null | undefined, newProxies: Array<{ __typename?: 'Proxy', id: number, host: string, port: number }> } }> };
+
+export type TelegramUsersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type TelegramUsersQuery = { __typename?: 'Query', telegramUsers: Array<{ __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null | undefined }> };
+
+export type TelegramUserQueryVariables = Exact<{
+  userId: Scalars['Int'];
+  take: Scalars['Int'];
+  skip: Scalars['Int'];
+}>;
+
+
+export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null | undefined, dialogs: Array<{ __typename?: 'TelegramChatDialog', id: number, inputMessage: string, startTime: any, answers?: Array<{ __typename?: 'TelegramBotAnswer', id: number, answerTime: any, text: string, extra?: any | null | undefined }> | null | undefined }> } };
 
 
 export const GetProxiesPage = gql`
@@ -284,6 +339,54 @@ export const WorkerTaskFinish = gql`
         id
         host
         port
+      }
+    }
+  }
+}
+    `;
+export const ProxyListSourcesWithLastUpdate = gql`
+    query ProxyListSourcesWithLastUpdate {
+  proxyListSources {
+    id
+    name
+    updateInterval
+    lastUpdate {
+      updateTime
+      newProxiesCount
+      error
+      newProxies {
+        id
+        host
+        port
+      }
+    }
+  }
+}
+    `;
+export const TelegramUsers = gql`
+    query telegramUsers {
+  telegramUsers {
+    id
+    first_name
+    username
+  }
+}
+    `;
+export const TelegramUser = gql`
+    query TelegramUser($userId: Int!, $take: Int!, $skip: Int!) {
+  telegramUser(userId: $userId) {
+    id
+    first_name
+    username
+    dialogs(take: $take, skip: $skip) {
+      id
+      inputMessage
+      startTime
+      answers {
+        id
+        answerTime
+        text
+        extra
       }
     }
   }
@@ -441,3 +544,107 @@ export function useWorkerTaskFinishSubscription(options: VueApolloComposable.Use
   return VueApolloComposable.useSubscription<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>(WorkerTaskFinishDocument, {}, options);
 }
 export type WorkerTaskFinishSubscriptionCompositionFunctionResult = VueApolloComposable.UseSubscriptionReturn<WorkerTaskFinishSubscription, WorkerTaskFinishSubscriptionVariables>;
+export const ProxyListSourcesWithLastUpdateDocument = gql`
+    query ProxyListSourcesWithLastUpdate {
+  proxyListSources {
+    id
+    name
+    updateInterval
+    lastUpdate {
+      updateTime
+      newProxiesCount
+      error
+      newProxies {
+        id
+        host
+        port
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useProxyListSourcesWithLastUpdateQuery__
+ *
+ * To run a query within a Vue component, call `useProxyListSourcesWithLastUpdateQuery` and pass it any options that fit your needs.
+ * When your component renders, `useProxyListSourcesWithLastUpdateQuery` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/query.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useProxyListSourcesWithLastUpdateQuery();
+ */
+export function useProxyListSourcesWithLastUpdateQuery(options: VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> = {}) {
+  return VueApolloComposable.useQuery<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>(ProxyListSourcesWithLastUpdateDocument, {}, options);
+}
+export type ProxyListSourcesWithLastUpdateQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>;
+export const TelegramUsersDocument = gql`
+    query telegramUsers {
+  telegramUsers {
+    id
+    first_name
+    username
+  }
+}
+    `;
+
+/**
+ * __useTelegramUsersQuery__
+ *
+ * To run a query within a Vue component, call `useTelegramUsersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTelegramUsersQuery` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param options that will be passed into the query, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/query.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useTelegramUsersQuery();
+ */
+export function useTelegramUsersQuery(options: VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> = {}) {
+  return VueApolloComposable.useQuery<TelegramUsersQuery, TelegramUsersQueryVariables>(TelegramUsersDocument, {}, options);
+}
+export type TelegramUsersQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<TelegramUsersQuery, TelegramUsersQueryVariables>;
+export const TelegramUserDocument = gql`
+    query TelegramUser($userId: Int!, $take: Int!, $skip: Int!) {
+  telegramUser(userId: $userId) {
+    id
+    first_name
+    username
+    dialogs(take: $take, skip: $skip) {
+      id
+      inputMessage
+      startTime
+      answers {
+        id
+        answerTime
+        text
+        extra
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useTelegramUserQuery__
+ *
+ * To run a query within a Vue component, call `useTelegramUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useTelegramUserQuery` returns an object from Apollo Client that contains result, loading and error properties
+ * you can use to render your UI.
+ *
+ * @param variables that will be passed into the query
+ * @param options that will be passed into the query, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/query.html#options;
+ *
+ * @example
+ * const { result, loading, error } = useTelegramUserQuery({
+ *   userId: // value for 'userId'
+ *   take: // value for 'take'
+ *   skip: // value for 'skip'
+ * });
+ */
+export function useTelegramUserQuery(variables: TelegramUserQueryVariables | VueCompositionApi.Ref<TelegramUserQueryVariables> | ReactiveFunction<TelegramUserQueryVariables>, options: VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> = {}) {
+  return VueApolloComposable.useQuery<TelegramUserQuery, TelegramUserQueryVariables>(TelegramUserDocument, variables, options);
+}
+export type TelegramUserQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<TelegramUserQuery, TelegramUserQueryVariables>;

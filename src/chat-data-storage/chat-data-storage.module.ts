@@ -8,4 +8,4 @@ import { ChatDataDBStorageService } from "./db-storage.service";
   providers: [ChatDataDBStorageService],
   exports: [ChatDataDBStorageService],
 })
-export class FileDbModule {}
+export class ChatDataStorageModule {}

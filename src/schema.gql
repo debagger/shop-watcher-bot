@@ -56,6 +56,22 @@ type ProxyTestType {
   testRuns: [ProxyTestRun!]!
 }
 
+type TelegramChatUser {
+  id: Int!
+  first_name: String!
+  is_bot: Boolean!
+  language_code: String
+  last_name: String
+  username: String
+}
+
+type TelegramBotAnswer {
+  id: Int!
+  text: String!
+  extra: JSON
+  answerTime: DateTime!
+}
+
 type ProxySourcesView {
   source: ProxyListSource!
   firstUpdate: ProxyListUpdate!
@@ -75,15 +91,6 @@ type KnownHostModel {
 type BestProxyItemModel {
   proxyAddress: String!
   rating: Float!
-}
-
-type SiteCrawlerState {
-  pendingRequests: [String!]!
-}
-
-type WorkerResult {
-  workerId: Int!
-  result: ProxyTestRun!
 }
 
 type Pagination {
@@ -107,26 +114,17 @@ type ProxyTesterWorkerTask {
 type ProxyTesterWorkerState {
   workerId: Int!
   currentTask: ProxyTesterWorkerTask
-  workers: [ProxyTesterWorkerState!]!
 }
 
 type Query {
-  state: SiteCrawlerState!
-  browserManagerState: BrowserManagerModel!
   proxyListSources: [ProxyListSource!]!
   proxies(skip: Int!, take: Int!): [Proxy!]!
   proxiesPage(rowsPerPage: Int!, page: Int!): PaginatedProxy!
   proxiesCount: Int!
   proxyListUpdates(skip: Int!, take: Int!): [ProxyListUpdate!]!
-  proxyTesterWorkerState: ProxyTesterWorkerState!
+  browserManagerState: BrowserManagerModel!
 }
 
 type Mutation {
   runSourceUpdate(sourceId: Int!): JSON!
-  run: Boolean!
-  stop: Boolean!
-}
-
-type Subscription {
-  onTaskFinish: WorkerResult!
 }

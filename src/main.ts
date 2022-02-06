@@ -9,10 +9,37 @@ import { env } from "process"
 import * as hookshot from "hookshot"
 import { spawn } from 'child_process'
 
+import {ProxyListRootModule} from './proxy-list-root.module'
+
 
 
 async function bootstrap() {
   dotenv.config();
+  const bootstrapMode = env["BOOTSTRAP_MODE"]
+
+  if(bootstrapMode==="ProxyListOnly"){
+    console.log("!!!ProxyListOnly mode!!!")
+    bootstrapProxyListOnly()
+  }else {
+    bootstrapAll()
+  }
+}
+
+async function bootstrapProxyListOnly() {
+
+  const app = await NestFactory.create(ProxyListRootModule);
+  const logger = app.get(Logger)
+  app.useLogger(logger)
+  const adapter = app.getHttpAdapter();
+  const port = env.APP_PORT ? env.APP_PORT : 3001
+
+  await app.listen(port);
+
+  console.log(`Application is running on: ${port}`);
+}
+
+async function bootstrapAll() {
+
   const app = await NestFactory.create(AppModule);
   const logger = app.get(Logger)
   app.useLogger(logger)
@@ -31,4 +58,6 @@ async function bootstrap() {
 
   console.log(`Application is running on: ${port}`);
 }
+
+
 bootstrap();

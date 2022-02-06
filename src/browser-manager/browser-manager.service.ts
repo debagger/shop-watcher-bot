@@ -8,19 +8,17 @@ import { ProxyTestRun, ProxyListUpdate, Proxy } from "./../entities";
 import { Repository } from "typeorm";
 import {
   ActiveProxyRequestContext,
+  BrowseArgs,
   BrowseContext,
 } from "./browse-context.type";
 import { performance } from "perf_hooks";
+import { getRandomsFromArray } from "./tools";
 
 @Injectable()
 export class BrowserManagerService {
   constructor(
     private readonly logger: PinoLogger,
-    @InjectRepository(Proxy) private readonly proxyRepo: Repository<Proxy>,
-    @InjectRepository(ProxyTestRun)
-    private readonly proxyTestRunRepo: Repository<ProxyTestRun>,
-    @InjectRepository(ProxyListUpdate)
-    private readonly proxyListUpdatesRepo: Repository<ProxyListUpdate>
+    @InjectRepository(Proxy) private readonly proxyRepo: Repository<Proxy>
   ) {
     logger.setContext(BrowserManagerService.name);
   }
@@ -30,22 +28,26 @@ export class BrowserManagerService {
     { best: string[]; blacklist: Set<string> }
   > = {};
 
-  private async getProxiedResponse(
-    axiosRequestConfig: AxiosRequestConfig,
-    browseContext: BrowseContext
-  ): Promise<{ proxyAddress: string; response: AxiosResponse; time: number }> {
-    const url = new URL(axiosRequestConfig.url);
-    const host = url.host;
+  private blacklistProxyForHost(proxyAddress: string, host: string) {
+    console.log(`Proxy ${proxyAddress} blacklisted for ${host} host`);
+    this.bestProxies[host].best = this.bestProxies[host].best.filter(
+      (i) => i !== proxyAddress
+    );
+    this.bestProxies[host].blacklist.add(proxyAddress);
+  }
 
-    const getRandomsFromArray = <T>(arr: T[], count: number) => {
-      const res: T[] = [];
-      for (let index = 0; index < count; index++) {
-        const random_idx = Math.floor(Math.random() * (arr.length - 1));
-        res.push(arr[random_idx]);
-      }
-      return res;
-    };
+  private setBestProxy(host: string, proxyAddress: string) {
+    this.bestProxies[host].best.push(proxyAddress);
+    while (this.bestProxies[host].best.length > 30) {
+      this.bestProxies[host].best.shift();
+    }
+  }
 
+  private async prepereProxiesListForRequest(
+    host: string,
+    predefinedProxiesAddresses: string[],
+    proxiesUsePerRequest: number
+  ) {
     if (!this.bestProxies[host]) {
       this.bestProxies[host] = {
         best: [],
@@ -66,19 +68,15 @@ export class BrowserManagerService {
       )
     );
 
-    const proxiesUsePerRequest = 30;
     const bestProxiesSet = Array.from(new Set(this.bestProxies[host].best));
     const predefinedProxiesSet: string[] = [];
-    if (browseContext.predefinedProxiesAddresses) {
+    if (predefinedProxiesAddresses) {
       const maxProxiesCount = proxiesUsePerRequest - bestProxiesSet.length;
-      if (maxProxiesCount >= browseContext.predefinedProxiesAddresses.length) {
-        predefinedProxiesSet.push(...browseContext.predefinedProxiesAddresses);
+      if (maxProxiesCount >= predefinedProxiesAddresses.length) {
+        predefinedProxiesSet.push(...predefinedProxiesAddresses);
       } else {
         predefinedProxiesSet.push(
-          ...getRandomsFromArray(
-            browseContext.predefinedProxiesAddresses,
-            maxProxiesCount
-          )
+          ...getRandomsFromArray(predefinedProxiesAddresses, maxProxiesCount)
         );
       }
     }
@@ -93,74 +91,113 @@ export class BrowserManagerService {
       ...predefinedProxiesSet,
       ...additionalProxies,
     ];
+    return proxiesForRequest;
+  }
+
+  private async getProxiedResponse(
+    axiosRequestConfig: AxiosRequestConfig,
+    browseContext: BrowseContext
+  ): Promise<{ proxyAddress: string; response: AxiosResponse; time: number }> {
+    const url = new URL(axiosRequestConfig.url);
+    const host = url.host;
+
+    if (this.bestProxies[host]?.best?.length > 0) {
+      try {
+        const bestAgents = Array.from(new Set(this.bestProxies[host].best)).map((proxyAddress) => {
+          const agent = new SocksProxyAgent(proxyAddress);
+          return { proxyAddress, agent };
+        });
+        const result = await this.makeRequestToProxyList(
+          bestAgents,
+          host,
+          axiosRequestConfig,
+          browseContext
+        );
+        return result;
+      } catch (error) {
+        console.log(`Best agents fails! ${url.toString()}`);
+      }
+    }
+
+    const proxiesForRequest = await this.prepereProxiesListForRequest(
+      host,
+      browseContext.predefinedProxiesAddresses,
+      browseContext.proxiesPerRequest
+    );
 
     const agents = proxiesForRequest.map((proxyAddress) => {
       const agent = new SocksProxyAgent(proxyAddress);
       return { proxyAddress, agent };
     });
 
+    try {
+      const result = await this.makeRequestToProxyList(
+        agents,
+        host,
+        axiosRequestConfig,
+        browseContext
+      );
+      return result;
+    } catch (error) {
+      throw new Error("All agents fails!");
+    }
+  }
+
+  private async makeRequestToProxyList(
+    agents,
+    host: string,
+    axiosRequestConfig: AxiosRequestConfig<any>,
+    browseContext: BrowseContext
+  ): Promise<{ proxyAddress: string; response: AxiosResponse; time: number }> {
     const CancelToken = axios.CancelToken;
     const sources = [];
 
-    try {
-      const result = await Promise.any(
-        agents.map(async ({ proxyAddress, agent }) => {
-          if (this.bestProxies[host].blacklist.has(proxyAddress)) {
-            throw new Error(
-              `Proxy ${proxyAddress} in blacklist for ${host} host`
-            );
-          }
+    return await Promise.any(
+      agents.map(async ({ proxyAddress, agent }) => {
+        if (this.bestProxies[host].blacklist.has(proxyAddress)) {
+          throw new Error(
+            `Proxy ${proxyAddress} in blacklist for ${host} host`
+          );
+        }
 
-          const cancelSource = CancelToken.source();
-          const requestContext: ActiveProxyRequestContext = {
-            axiosRequestConfig: {
-              ...axiosRequestConfig,
-              httpAgent: agent,
-              httpsAgent: agent,
-              timeout: 10000,
-              cancelToken: cancelSource.token,              
-            },
-            canceTokenSource: cancelSource,
-            proxyUrl: proxyAddress,
-            url: axiosRequestConfig.url,
-          };
-          browseContext.activeRequests.add(requestContext);
+        const cancelSource = CancelToken.source();
+        sources.push(cancelSource);
 
-          sources.push(cancelSource);
-          const start = performance.now();
-          const response = await axios(
-            requestContext.axiosRequestConfig
-          ).finally(() => {
+        const requestContext: ActiveProxyRequestContext = {
+          axiosRequestConfig: {
+            ...axiosRequestConfig,
+            httpAgent: agent,
+            httpsAgent: agent,
+            timeout: browseContext.requestTimeout,
+            cancelToken: cancelSource.token,
+          },
+          canceTokenSource: cancelSource,
+          proxyUrl: proxyAddress,
+          url: axiosRequestConfig.url,
+        };
+
+        browseContext.activeRequests.add(requestContext);
+
+        const start = performance.now();
+
+        const response = await axios(requestContext.axiosRequestConfig).finally(
+          () => {
             browseContext.activeRequests.delete(requestContext);
-          });
-
-          if (browseContext.isValidResponse(response)) {
-            sources.forEach(({ cancel }) => cancel());
-
-            this.bestProxies[host].best.push(proxyAddress);
-
-            while (this.bestProxies[host].best.length > 30) {
-              this.bestProxies[host].best.shift();
-            }
-
-            return { proxyAddress, response, time: performance.now() - start };
-          } else {
-            console.log(`Proxy ${proxyAddress} blacklisted for ${host} host`);
-            this.bestProxies[host].best = this.bestProxies[host].best.filter(
-              (i) => i !== proxyAddress
-            );
-            this.bestProxies[host].blacklist.add(proxyAddress);
-            throw new Error(
-              `Validation fails for ${proxyAddress}  ${axiosRequestConfig.url}`
-            );
           }
-        })
-      );
+        );
 
-      return result;
-    } catch (error) {
-      throw new Error("All requests fails!");
-    }
+        if (browseContext.isValidResponse(response)) {
+          sources.forEach(({ cancel }) => cancel());
+          this.setBestProxy(host, proxyAddress);
+          return { proxyAddress, response, time: performance.now() - start };
+        } else {
+          this.blacklistProxyForHost(proxyAddress, host);
+          throw new Error(
+            `Validation fails for ${proxyAddress}  ${axiosRequestConfig.url}`
+          );
+        }
+      })
+    );
   }
 
   private async browserRequestInteceptor(
@@ -211,15 +248,25 @@ export class BrowserManagerService {
   }
 
   public async browse<T>(
-    context: BrowseContext,
-    action: (page: Page) => Promise<T>
+    args: BrowseArgs,
+    action: (page: Page, context: BrowseContext) => Promise<T>
   ): Promise<T> {
     const browser = await connect({
-      browserWSEndpoint: "ws://chromium:3000?timeout=300000",
+      browserWSEndpoint: "ws://chromium:3000?timeout=600000",
       defaultViewport: { height: 1080, width: 1920 },
     });
 
-    const page = await (context.incognito
+    const context: BrowseContext = {
+      isValidResponse: args.isValidResponse
+        ? args.isValidResponse
+        : (resp) => true,
+      activeRequests: new Set<ActiveProxyRequestContext>(),
+      predefinedProxiesAddresses: args.predefinedProxiesAddresses,
+      requestTimeout: args.requestTimeout ? args.requestTimeout : 10000,
+      proxiesPerRequest: args.proxiesPerRequest ? args.proxiesPerRequest : 20,
+    };
+
+    const page = await (args.incognito
       ? (await browser.createIncognitoBrowserContext()).newPage()
       : browser.newPage());
 
@@ -238,7 +285,8 @@ export class BrowserManagerService {
       this.browserRequestInteceptor(request, context, page)
     );
 
-    const result = await action(page);
+    const result = await action(page, context);
+
     await page.close();
     browser.disconnect();
     return result;

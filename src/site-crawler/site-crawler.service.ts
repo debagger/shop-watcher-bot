@@ -73,31 +73,13 @@ export class SiteCrawlerService {
         `socks${tr.protocol}://${tr.testedProxy.host}:${tr.testedProxy.port}`
     );
 
-    const browseContext: BrowseContext = {
-      activeRequests: new Set(),
-      isValidResponse(resp) {
-        if (resp.headers["content-type"].startsWith("text/html")) {
-          try {
-            const htmlTag = parse(resp.data).querySelector("html");
-            console.dir(htmlTag?.attributes);
-            const result = htmlTag?.attributes["lang"] === "ru-RU";
-            console.log(`Result isValid = ${result}`);
-            return result;
-          } catch (error) {
-            return false;
-          }
-        }
-        return true;
-      },
-      predefinedProxiesAddresses,
-      incognito:true
-    };
-
     const result = await this.browserManager.browse(
-      browseContext,
-      async (page) => {
+      { predefinedProxiesAddresses, incognito: true },
+      async (page, browseContext) => {
         try {
-          page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36');
+          page.setUserAgent(
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36"
+          );
           page.setGeolocation({ latitude: 55.751244, longitude: 37.618423 }); //Moscow
 
           await page.evaluateOnNewDocument(() => {
@@ -118,11 +100,15 @@ export class SiteCrawlerService {
 
           let gotoResult: HTTPResponse;
           for (let i = 1; i <= 5; i++) {
-            gotoResult = await page.goto(targetURL, {
-              waitUntil: "domcontentloaded",
-              timeout: 60000,
-            });
-
+            try {
+              gotoResult = null;
+              gotoResult = await page.goto(targetURL, {
+                waitUntil: "domcontentloaded",
+                timeout: 60000,
+              });
+            } catch (error) {
+              console.log(error.message);
+            }
             console.log(
               `Navigation finished. Canceling ${browseContext.activeRequests.size} active requests`
             );
@@ -177,8 +163,9 @@ export class SiteCrawlerService {
           );
 
           const name = await page.evaluate(() => {
-            const productName:string = globalThis.zara?.viewPayload?.product?.name;
-            return productName
+            const productName: string =
+              globalThis.zara?.viewPayload?.product?.name;
+            return productName;
           });
 
           if (!name) {

@@ -2,8 +2,8 @@ import { Injectable, InternalServerErrorException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Cron } from "@nestjs/schedule";
-import { ProxyListSourcesService } from "../proxy-list-sources/proxy-list-sources.service";
-import { ProxyListSource, ProxyListUpdate, Proxy } from "./../../entities";
+import { ProxyListSourcesService } from "./proxy-list-sources.service";
+import { ProxyListSource, ProxyListUpdate, Proxy } from "../entities";
 import { PinoLogger } from "nestjs-pino";
 import { ApplicationError } from "src/AppError.class";
 

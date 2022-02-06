@@ -9,13 +9,16 @@ import {
   ProxyTestType,
   ProxySourcesView,
 } from "../entities";
-import { ProxyListSourcesService } from "./proxy-list-sources/proxy-list-sources.service";
-import { ProxyListUpdaterService } from "./proxy-list-updater/proxy-list-updater.service";
-import { ProxyTesterService } from "./proxy-tester/proxy-tester.service";
+import { ProxyListSourcesService } from "./proxy-list-sources.service";
+import { ProxyListUpdaterService } from "./proxy-list-updater.service";
 import { ProxyListSourceResolver } from './proxy-list-source.resolver';
 import { ProxyResolver } from './proxy.resolver';
 import { ProxyListUpdateResolver } from './proxy-list-update.resolver';
-import { ProxyTesterResolver } from "./proxy-tester/proxy-tester.resolver";
+import { SocksProxyNetSourceService } from "./sources/socks-proxy-net.service";
+import { HidemyNameSourceService } from "./sources/hidemy-name.service";
+import { SpysOneSourceService } from "./sources/spys-one.service";
+import { FreeProxyCzSourceService } from "./sources/free-proxy-cz.service";
+
 
 @Module({
   imports: [ BrowserManagerModule,    
@@ -29,22 +32,23 @@ import { ProxyTesterResolver } from "./proxy-tester/proxy-tester.resolver";
     ]),
   ],
   providers: [
+    FreeProxyCzSourceService,
+    SpysOneSourceService,
+    HidemyNameSourceService,
+    SocksProxyNetSourceService,
     ProxyListSourcesService,
     ProxyListUpdaterService,
-    ProxyTesterService,
     ProxyListSourceResolver,
     ProxyResolver,
     ProxyListUpdateResolver,
-    ProxyTesterResolver
   ],
 })
 export class ProxyListModule implements OnModuleInit {
   constructor(
     private proxyUpdater: ProxyListUpdaterService,
-    private proxyTester: ProxyTesterService
   ) {}
   async onModuleInit() {
-    // await this.proxyUpdater.updateSource(4)
+    // await this.proxyUpdater.updateSource(3)
     // await this.proxyUpdater.updateAllSources();    
   }
 }

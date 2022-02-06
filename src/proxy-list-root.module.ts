@@ -1,12 +1,6 @@
 import { Module, RequestMethod } from '@nestjs/common';
 import { TelegramBotModule } from './telegram-bot/telegram-bot.module';
 import { ConfigModule } from '@nestjs/config';
-import { ChatDataStorageModule } from './chat-data-storage/chat-data-storage.module';
-import { ChatDataModule } from './chat-data/chat-data.module';
-import { SiteCrawlerModule } from './site-crawler/site-crawler.module';
-import { LinkScannerModule } from './link-scanner/link-scanner.module';
-import { AuthModule } from './auth/auth.module';
-import { UserLinksModule } from './user-links/user-links.module';
 import { LoggerModule } from 'nestjs-pino';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -74,20 +68,12 @@ const getDbConfigs = () => {
       exclude:["/graphql"]
     }),
     LoggerModule.forRoot({exclude:[{method:RequestMethod.ALL, path:'/graphql'}]}),
-    TelegramBotModule,
     ConfigModule.forRoot(),
     GraphQLModule.forRoot({
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
       installSubscriptionHandlers: true,
     }),
-    ChatDataStorageModule,
-    ChatDataModule,
-    SiteCrawlerModule,
-    LinkScannerModule,
-    AuthModule,
-    UserLinksModule,
     ProxyListModule,
-    BrowserManagerModule,
-    ProxyTesterModule],
+    BrowserManagerModule],
 })
-export class AppModule { }
+export class ProxyListRootModule { }

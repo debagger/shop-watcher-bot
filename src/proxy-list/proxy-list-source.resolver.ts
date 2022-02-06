@@ -12,7 +12,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { GraphQLJSON } from "graphql-scalars";
 import { Repository } from "typeorm";
 import { ProxyListSource, ProxyListUpdate } from "../entities";
-import { ProxyListUpdaterService } from "./proxy-list-updater/proxy-list-updater.service";
+import { ProxyListUpdaterService } from "./proxy-list-updater.service";
 
 @Resolver((of) => ProxyListSource)
 export class ProxyListSourceResolver {

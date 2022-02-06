@@ -8,6 +8,8 @@ const routes: RouteRecordRaw[] = [
       { path: '', component: () => import('pages/Index.vue') },
       { path: 'proxies', component: () => import('pages/ProxyList.vue') },
       { path: 'proxy-tester', component: () => import('pages/ProxyTester.vue') },
+      { path: 'proxy-list-sources', component: () => import('pages/ProxyListSources.vue') },
+      { path: 'bot-users', component: () => import('pages/BotUsers.vue') },
     ],
   },
 

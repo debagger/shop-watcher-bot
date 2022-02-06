@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ChatDataService } from "./chat-data.service";
-import { FileDbModule } from "../chat-data-storage/chat-data-storage.module";
+import { ChatDataStorageModule } from "../chat-data-storage/chat-data-storage.module";
 import { async } from "rxjs";
 
 describe("ChatDataService", () => {
@@ -9,7 +9,7 @@ describe("ChatDataService", () => {
   beforeEach(async () => {
     process.env["CHATS_DATA_DIR"] = "C:\\Projects\\shop-watcher-bot\\chats";
     const module: TestingModule = await Test.createTestingModule({
-      imports: [FileDbModule],
+      imports: [ChatDataStorageModule],
       providers: [ChatDataService],
     }).compile();
 

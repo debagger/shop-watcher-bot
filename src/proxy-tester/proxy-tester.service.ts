@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { EventEmitter } from "stream";
 import { Repository } from "typeorm";
-import { Proxy, ProxyTestType, ProxyTestRun } from "./../../entities";
+import { Proxy, ProxyTestType, ProxyTestRun } from "./../entities";
 import { CancelableTask, ProxyTesterWorker } from "./proxy-tester-worker.class";
 import * as ProxyTests from "./proxy-tests";
 import { ProxyTestResultType } from "./proxy-tests/proxy-test.type";

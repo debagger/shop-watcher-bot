@@ -2,25 +2,44 @@ import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Telegraf, Context, Markup } from "telegraf";
 import { ConfigService } from "@nestjs/config";
 import { ChatDataService } from "../chat-data/chat-data.service";
-import { ChatLinks, LinkCheckResultMulticolors, MulticolorLink, TrackItem } from "../chat-data-storage/chat-links.interface";
+import {
+  ChatLinks,
+  LinkCheckResultMulticolors,
+  MulticolorLink,
+  TrackItem,
+} from "../chat-data-storage/chat-links.interface";
 import { SiteCrawlerService } from "../site-crawler/site-crawler.service";
 import { createHash } from "crypto";
 import { IEventHandler, EventsHandler } from "@nestjs/cqrs";
 import { NewSizeExist } from "../link-scanner/new-size-exist.event";
 import { AuthService } from "../auth/auth.service";
 import { PinoLogger } from "nestjs-pino";
+import { InjectRepository } from "@nestjs/typeorm";
+import {
+  TelegramChatUser,
+  TelegramChatDialog,
+  TelegramBotAnswer,
+} from "../entities";
+import { Repository } from "typeorm";
 
 @Injectable()
 @EventsHandler(NewSizeExist)
 export class TelegramBotService
-  implements OnModuleInit, IEventHandler<NewSizeExist> {
+  implements OnModuleInit, IEventHandler<NewSizeExist>
+{
   constructor(
     private config: ConfigService,
     private chatDataStorage: ChatDataService,
     private spider: SiteCrawlerService,
     private authService: AuthService,
-    private readonly logger: PinoLogger
-  ) { }
+    private readonly logger: PinoLogger,
+    @InjectRepository(TelegramChatUser)
+    private readonly telegramChatUserRepo: Repository<TelegramChatUser>,
+    @InjectRepository(TelegramChatDialog)
+    private readonly telegramChatDialog: Repository<TelegramChatDialog>,
+    @InjectRepository(TelegramBotAnswer)
+    private readonly telegramBotAnswer: Repository<TelegramBotAnswer>
+  ) {}
 
   async handle(event: NewSizeExist) {
     const { telegram } = this.botInstance;
@@ -35,30 +54,55 @@ export class TelegramBotService
    * botInit
    */
 
-  private callbackHashtable: Record<string, { message: any, timestamp: Date }> = {}
+  private callbackHashtable: Record<string, { message: any; timestamp: Date }> =
+    {};
 
   private putCallback(message: any): string {
+    const md4 = createHash("md4").update(JSON.stringify(message)).digest("hex");
 
+    this.callbackHashtable[md4] = { message, timestamp: new Date() };
 
-
-    const md4 = createHash("md4")
-      .update(JSON.stringify(message))
-      .digest("hex");
-
-    this.callbackHashtable[md4] = { message, timestamp: new Date() }
-
-    return md4
+    return md4;
   }
 
   private getCallback(md4: string) {
-    const message = this.callbackHashtable[md4]?.message
-    return message
+    const message = this.callbackHashtable[md4]?.message;
+    return message;
   }
 
   public async botInit() {
     const bot = new Telegraf(this.API_KEY);
-    const keyboard = Markup.keyboard(["Показать все"])
-      .resize();
+
+    bot.use(async (ctx, next) => {
+      
+      await this.telegramChatUserRepo.upsert(ctx.from, ["id"]);
+
+      const user = await this.telegramChatUserRepo.findOne(ctx.from.id);
+
+      const dialog = await this.telegramChatDialog.save({
+        chatId: ctx.chat.id,
+        from: user,
+        inputMessage: ctx.message["text"],
+        startTime: new Date()
+      });
+
+      const oldReply = ctx.reply.bind(ctx);
+
+      ctx.reply = async (text, extra) => {
+        await this.telegramBotAnswer.save({dialog, answerTime: new Date(), extra, text})
+        return oldReply(text, extra);
+      };
+      
+      const oldAnswerCbQuery = ctx.answerCbQuery.bind(ctx);
+
+      ctx.answerCbQuery = async (text, extra) => {
+        await this.telegramBotAnswer.save({dialog, answerTime: new Date(), extra, text})
+        return oldAnswerCbQuery(text, extra);
+      };
+      await next();
+    });
+
+    const keyboard = Markup.keyboard(["Показать все"]).resize();
     bot.start((ctx) =>
       ctx.reply(
         "Отправьте мне ссылку на страничку zara.com и я буду отслеживать появление размеров в продаже.",
@@ -87,7 +131,7 @@ export class TelegramBotService
       if (!message.text) return;
       const text = message.text;
       const chatId = message.chat.id;
-      let link
+      let link;
       try {
         const url = new URL(text);
         const keyToDelete: string[] = [];
@@ -96,35 +140,33 @@ export class TelegramBotService
         //Look like only v1 and maybe v2 and so on has affect for resulted page than remove other keys
 
         url.searchParams.forEach((_, key) => {
-          if (!/v\d+/.test(key)) keyToDelete.push(key)
-        })
+          if (!/v\d+/.test(key)) keyToDelete.push(key);
+        });
 
         //delete other keys
-        keyToDelete.forEach(key => url.searchParams.delete(key))
+        keyToDelete.forEach((key) => url.searchParams.delete(key));
 
         //sort for uniformity
         url.searchParams.sort();
-        link = url.toString()
-      }
-      catch (err) {
+        link = url.toString();
+      } catch (err) {
         ctx.reply("Это какая-то неправильная ссылка");
         return;
       }
 
+      this.spider
+        .getData(link)
+        .then((res) => {
+          if (res && res.name && res.colors.length > 0) {
+            return this.sendLinkResult(chatId, link, res);
+          }
+        })
+        .catch((err) => {
+          const { telegram } = this.botInstance;
+          ctx.reply(`Произошла ошибка при загрузке ссылки \n ${link}`);
+        });
 
-      this.spider.getData(link).then((res) => {
-        if (res && res.name && res.colors.length > 0) {
-          return this.sendLinkResult(chatId, link, res);
-        }
-
-      }).catch(err => {
-        const { telegram } = this.botInstance
-        telegram.sendMessage(chatId, `Произошла ошибка при загрузке ссылки \n ${link}`)
-      });
-
-      ctx.reply("Начал загрузку информации по данной позиции")
-
-
+      ctx.reply("Начал загрузку информации по данной позиции");
     });
 
     bot.action(/size:(.+)/, async (ctx) => {
@@ -133,16 +175,18 @@ export class TelegramBotService
       const chat = await this.chatDataStorage.getChat(ctx.chat.id);
       const selectedSize = this.getCallback(ctx.match[1]);
       if (!selectedSize) {
-        await ctx.reply("Что-то пошло не так")
-        return
+        await ctx.reply("Что-то пошло не так");
+        return;
       }
       const links = chat.links;
       if (links) {
         const curLink = <MulticolorLink>chat.links[selectedSize.link];
 
-        const foundColor = curLink.lastCheckResult?.colors.find(c => c.color.name === selectedSize.colorName);
+        const foundColor = curLink.lastCheckResult?.colors.find(
+          (c) => c.color.name === selectedSize.colorName
+        );
         if (!foundColor) {
-          await ctx.reply("Такой размер не найден")
+          await ctx.reply("Такой размер не найден");
           return;
         }
         const foundSize = foundColor.sizes.find(
@@ -152,36 +196,41 @@ export class TelegramBotService
           if (!curLink.trackFor) {
             curLink.trackFor = [];
           }
-          const newTrackItem: TrackItem = { color: foundColor.color.name, size: foundSize.size };
+          const newTrackItem: TrackItem = {
+            color: foundColor.color.name,
+            size: foundSize.size,
+          };
 
-          if (!(<TrackItem[]>curLink.trackFor).find(i => i.size === newTrackItem.size && i.color === newTrackItem.color)) {
-            (<TrackItem[]>curLink.trackFor).push(newTrackItem)
+          if (
+            !(<TrackItem[]>curLink.trackFor).find(
+              (i) =>
+                i.size === newTrackItem.size && i.color === newTrackItem.color
+            )
+          ) {
+            (<TrackItem[]>curLink.trackFor).push(newTrackItem);
           }
 
-          const trackItems = (<TrackItem[]>curLink.trackFor);
-          const trackColorNames = new Set(trackItems.map(i => i.color))
-          let msg = "ОК. Я буду следить за:\n"
+          const trackItems = <TrackItem[]>curLink.trackFor;
+          const trackColorNames = new Set(trackItems.map((i) => i.color));
+          let msg = "ОК. Я буду следить за:\n";
 
           for (let colorName of trackColorNames) {
-            msg += `Цвет: ${colorName}. `
-            const colorSizes = trackItems.filter(i => i.color === colorName).map(i => i.size)
-            msg += `Размеры: ${colorSizes.join(", ")}\n`
+            msg += `Цвет: ${colorName}. `;
+            const colorSizes = trackItems
+              .filter((i) => i.color === colorName)
+              .map((i) => i.size);
+            msg += `Размеры: ${colorSizes.join(", ")}\n`;
           }
           return await ctx.reply(msg);
         } else {
           return await ctx.reply("Такого размера нет");
         }
-
       }
-    }
-    );
-
-
-
+    });
 
     bot.hears("Показать все", async (ctx) => {
       if (!ctx.chat) return;
-      ctx.chat.type
+      ctx.chat.type;
       const chat = await this.chatDataStorage.getChat(ctx.chat.id);
       const links = chat.links;
       const zaraLinks = Object.keys(links).filter((i) =>
@@ -192,16 +241,25 @@ export class TelegramBotService
           "Пока я не отслеживаю ни одной позиции. Если хочешь, пришли мне ссылку на zara.com и я буду следить за размерами."
         );
       for (const link of zaraLinks) {
-        const deleteButton =
-          Markup.button.callback("Удалить ❌", `delete:${this.putCallback(link)}`);
+        const deleteButton = Markup.button.callback(
+          "Удалить ❌",
+          `delete:${this.putCallback(link)}`
+        );
 
         const linkData = links[link] as MulticolorLink;
 
         const buttons = [[deleteButton]];
         if (linkData.trackFor) {
-          const sizeButton = linkData.trackFor.map((trackItem) =>
-            [Markup.button.callback(`❌ ${trackItem.color + ': ' + trackItem.size}`, `deleteSize:${this.putCallback({ link, size: trackItem.size, color: trackItem.color })}`)]
-          )
+          const sizeButton = linkData.trackFor.map((trackItem) => [
+            Markup.button.callback(
+              `❌ ${trackItem.color + ": " + trackItem.size}`,
+              `deleteSize:${this.putCallback({
+                link,
+                size: trackItem.size,
+                color: trackItem.color,
+              })}`
+            ),
+          ]);
 
           buttons.push(...sizeButton);
         }
@@ -209,9 +267,8 @@ export class TelegramBotService
         try {
           const result = await ctx.reply(link, keyboard);
         } catch (error) {
-          this.logger.error(error)
+          this.logger.error(error);
         }
-
       }
     });
 
@@ -228,11 +285,11 @@ export class TelegramBotService
         delete chat.links[link];
         try {
           await ctx.answerCbQuery(`Удалил`);
-        } catch (err) { }
+        } catch (err) {}
       } else {
         try {
           await ctx.answerCbQuery(`Не нашел чего удалять`);
-        } catch (err) { }
+        } catch (err) {}
       }
     });
 
@@ -243,7 +300,11 @@ export class TelegramBotService
       const chat = await this.chatDataStorage.getChat(ctx.chat.id);
       const links = chat.links;
       const sizeHash = ctx.match[1];
-      const callback = this.getCallback(sizeHash) as { link: string; size: string, color?: string }
+      const callback = this.getCallback(sizeHash) as {
+        link: string;
+        size: string;
+        color?: string;
+      };
       if (!callback) {
         try {
           return ctx.answerCbQuery("Что-то пошло не так...");
@@ -252,7 +313,7 @@ export class TelegramBotService
         }
       }
 
-      const { link, size, color } = callback
+      const { link, size, color } = callback;
 
       if (!link) {
         try {
@@ -264,8 +325,10 @@ export class TelegramBotService
       const linkData = links[link] as MulticolorLink;
 
       const trackSizes = linkData.trackFor;
-      if (trackSizes.find(i => i.color === color && i.size === size)) {
-        linkData.trackFor = trackSizes.filter(i => !(i.size === size && i.color === color))
+      if (trackSizes.find((i) => i.color === color && i.size === size)) {
+        linkData.trackFor = trackSizes.filter(
+          (i) => !(i.size === size && i.color === color)
+        );
         try {
           return await ctx.answerCbQuery(`Удалил`);
         } catch (err) {
@@ -273,8 +336,6 @@ export class TelegramBotService
           return;
         }
       }
-
-
     });
 
     await bot.launch();
@@ -284,8 +345,12 @@ export class TelegramBotService
 
   public botInstance: Telegraf<Context>;
 
-  private async sendLinkResult(chatId: number, link: string, res: LinkCheckResultMulticolors) {
-    const chat = await this.chatDataStorage.getChat(chatId)
+  private async sendLinkResult(
+    chatId: number,
+    link: string,
+    res: LinkCheckResultMulticolors
+  ) {
+    const chat = await this.chatDataStorage.getChat(chatId);
     const links = chat.links;
     let linkData: any = links[link];
 
@@ -293,7 +358,7 @@ export class TelegramBotService
       linkData = {};
     }
 
-    linkData.type = 'multicolorLink';
+    linkData.type = "multicolorLink";
     if (!links[link]) {
       links[link] = linkData;
     }
@@ -306,11 +371,27 @@ ${color.color.name}
 ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 Напишите за каким следить?
     `;
-      const buttons = color.sizes.map((i) => Markup.button.callback(i.size, "size:" + this.putCallback({ link, colorName: color.color.name, size: i.size })));
+      const buttons = color.sizes.map((i) =>
+        Markup.button.callback(
+          i.size,
+          "size:" +
+            this.putCallback({
+              link,
+              colorName: color.color.name,
+              size: i.size,
+            })
+        )
+      );
       const keyboard = Markup.inlineKeyboard(buttons);
 
       const { telegram } = this.botInstance;
       await telegram.sendMessage(chatId, msg, keyboard);
+      
+      const lastDialog = await this.telegramChatDialog.findOne({where:{chatId}, order:{startTime:'DESC'}})
+      
+      if(lastDialog){
+        this.telegramBotAnswer.save({dialog: lastDialog, text:msg, answerTime: new Date(), extra: keyboard})
+      }
     }
     links.lastLink = link;
     return;
@@ -318,5 +399,11 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
   public async onModuleInit() {
     this.botInstance = await this.botInit();
+    const { telegram } = this.botInstance;
+    const oldSendMessage = telegram.sendMessage;
+    telegram.sendMessage = (chatId, text, extra) => {
+      console.log(text);
+      return oldSendMessage(chatId, text, extra);
+    };
   }
 }
