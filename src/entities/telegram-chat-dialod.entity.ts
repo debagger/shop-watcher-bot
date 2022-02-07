@@ -19,7 +19,7 @@ export class TelegramChatDialog{
     chatId:number
 
     @Field()
-    @Column()
+    @Column("nvarchar", {length: 4096})
     inputMessage:string
 
     @Field()

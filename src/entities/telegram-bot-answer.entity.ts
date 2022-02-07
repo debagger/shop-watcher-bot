@@ -13,7 +13,7 @@ export class TelegramBotAnswer{
     id: number
     
     @Field()
-    @Column()
+    @Column("nvarchar", {length: 4096})
     text:string
 
     @Field((type) => GraphQLJSON, {nullable: true})

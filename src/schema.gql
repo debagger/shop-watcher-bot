@@ -63,6 +63,16 @@ type TelegramChatUser {
   language_code: String
   last_name: String
   username: String
+  dialogs(skip: Int!, take: Int!): [TelegramChatDialog!]!
+}
+
+type TelegramChatDialog {
+  id: Int!
+  from: TelegramChatUser!
+  chatId: Int!
+  inputMessage: String!
+  startTime: DateTime!
+  answers: [TelegramBotAnswer!]
 }
 
 type TelegramBotAnswer {
@@ -93,6 +103,10 @@ type BestProxyItemModel {
   rating: Float!
 }
 
+type SiteCrawlerState {
+  pendingRequests: [String!]!
+}
+
 type Pagination {
   page: Int!
   rowsPerPage: Int!
@@ -102,6 +116,11 @@ type Pagination {
 type PaginatedProxy {
   pagination: Pagination!
   rows: [Proxy!]!
+}
+
+type WorkerResult {
+  workerId: Int!
+  result: ProxyTestRun!
 }
 
 type ProxyTesterWorkerTask {
@@ -114,17 +133,28 @@ type ProxyTesterWorkerTask {
 type ProxyTesterWorkerState {
   workerId: Int!
   currentTask: ProxyTesterWorkerTask
+  workers: [ProxyTesterWorkerState!]!
 }
 
 type Query {
+  telegramUsers: [TelegramChatUser!]!
+  telegramUser(userId: Int!): TelegramChatUser!
+  state: SiteCrawlerState!
+  browserManagerState: BrowserManagerModel!
   proxyListSources: [ProxyListSource!]!
   proxies(skip: Int!, take: Int!): [Proxy!]!
   proxiesPage(rowsPerPage: Int!, page: Int!): PaginatedProxy!
   proxiesCount: Int!
   proxyListUpdates(skip: Int!, take: Int!): [ProxyListUpdate!]!
-  browserManagerState: BrowserManagerModel!
+  proxyTesterWorkerState: ProxyTesterWorkerState!
 }
 
 type Mutation {
   runSourceUpdate(sourceId: Int!): JSON!
+  run: Boolean!
+  stop: Boolean!
+}
+
+type Subscription {
+  onTaskFinish: WorkerResult!
 }

@@ -36,7 +36,7 @@ export class TelegramBotService
     @InjectRepository(TelegramChatUser)
     private readonly telegramChatUserRepo: Repository<TelegramChatUser>,
     @InjectRepository(TelegramChatDialog)
-    private readonly telegramChatDialog: Repository<TelegramChatDialog>,
+    private readonly telegramChatDialogRepo: Repository<TelegramChatDialog>,
     @InjectRepository(TelegramBotAnswer)
     private readonly telegramBotAnswer: Repository<TelegramBotAnswer>
   ) {}
@@ -74,29 +74,50 @@ export class TelegramBotService
     const bot = new Telegraf(this.API_KEY);
 
     bot.use(async (ctx, next) => {
-      
       await this.telegramChatUserRepo.upsert(ctx.from, ["id"]);
 
       const user = await this.telegramChatUserRepo.findOne(ctx.from.id);
 
-      const dialog = await this.telegramChatDialog.save({
-        chatId: ctx.chat.id,
-        from: user,
-        inputMessage: ctx.message["text"],
-        startTime: new Date()
-      });
+      let dialog: TelegramChatDialog;
+      if (ctx.message) {
+        dialog = await this.telegramChatDialogRepo.save({
+          chatId: ctx.chat.id,
+          from: user,
+          inputMessage: ctx.message["text"],
+          startTime: new Date(),
+        });
+      } else {
+        dialog = await this.telegramChatDialogRepo.findOne({
+          where: { chatId: ctx.chat.id },
+          order: { startTime: "DESC" },
+        });
+      }
 
       const oldReply = ctx.reply.bind(ctx);
 
       ctx.reply = async (text, extra) => {
-        await this.telegramBotAnswer.save({dialog, answerTime: new Date(), extra, text})
+        if (dialog) {
+          await this.telegramBotAnswer.save({
+            dialog,
+            answerTime: new Date(),
+            extra,
+            text,
+          });
+        }
         return oldReply(text, extra);
       };
-      
+
       const oldAnswerCbQuery = ctx.answerCbQuery.bind(ctx);
 
       ctx.answerCbQuery = async (text, extra) => {
-        await this.telegramBotAnswer.save({dialog, answerTime: new Date(), extra, text})
+        if (dialog) {
+          await this.telegramBotAnswer.save({
+            dialog,
+            answerTime: new Date(),
+            extra,
+            text,
+          });
+        }
         return oldAnswerCbQuery(text, extra);
       };
       await next();
@@ -386,12 +407,6 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
       const { telegram } = this.botInstance;
       await telegram.sendMessage(chatId, msg, keyboard);
-      
-      const lastDialog = await this.telegramChatDialog.findOne({where:{chatId}, order:{startTime:'DESC'}})
-      
-      if(lastDialog){
-        this.telegramBotAnswer.save({dialog: lastDialog, text:msg, answerTime: new Date(), extra: keyboard})
-      }
     }
     links.lastLink = link;
     return;
@@ -400,9 +415,23 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
   public async onModuleInit() {
     this.botInstance = await this.botInit();
     const { telegram } = this.botInstance;
-    const oldSendMessage = telegram.sendMessage;
-    telegram.sendMessage = (chatId, text, extra) => {
-      console.log(text);
+
+    const oldSendMessage = telegram.sendMessage.bind(telegram);
+
+    telegram.sendMessage = async (chatId, text, extra) => {
+      const lastDialog = await this.telegramChatDialogRepo.findOne({
+        where: { chatId },
+        order: { startTime: "DESC" },
+      });
+
+      if (lastDialog) {
+        this.telegramBotAnswer.save({
+          dialog: lastDialog,
+          text,
+          answerTime: new Date(),
+          extra,
+        });
+      }
       return oldSendMessage(chatId, text, extra);
     };
   }
