@@ -23,7 +23,6 @@ export class FreeProxyCzSourceService
     private readonly proxyTestRunRepo: Repository<ProxyTestRun>
   ) {}
 
-
   private async getBrowseProxies() {
     const successTests = await this.proxyTestRunRepo.find({
       where: {
@@ -32,7 +31,7 @@ export class FreeProxyCzSourceService
       },
       order: { runTime: "DESC" },
       relations: ["testedProxy", "testType"],
-      take: 100,
+      take: 1000,
     });
 
     const predefinedProxiesAddresses = successTests.map(
@@ -51,8 +50,8 @@ export class FreeProxyCzSourceService
     const browseOptions: BrowseArgs = {
       incognito: true,
       predefinedProxiesAddresses,
-      requestTimeout: 30000,
-      proxiesPerRequest: 50,
+      requestTimeout: 10000,
+      proxiesPerRequest: 100,
     };
 
     return await this.browserManager.browse(
@@ -65,7 +64,6 @@ export class FreeProxyCzSourceService
         let response: HTTPResponse;
         for (let index = 0; index < 10; index++) {
           try {
-
             response = await page.goto(url, {
               waitUntil: "domcontentloaded",
               timeout: 120000,
@@ -82,9 +80,10 @@ export class FreeProxyCzSourceService
             this.logger.info(
               `Try #${index}. Proxy list source 'free-proxy.cz' error ${error.message}`
             );
-          }
-          finally {
-            browseContext.activeRequests.forEach(r=>r.canceTokenSource.cancel())
+          } finally {
+            browseContext.activeRequests.forEach((r) =>
+              r.canceTokenSource.cancel()
+            );
           }
         }
       }
@@ -102,7 +101,7 @@ export class FreeProxyCzSourceService
     });
   }
 
-  private async extractPageLinks(page:Page){
+  private async extractPageLinks(page: Page) {
     return await page.evaluate(() => {
       return Array.from(
         document.querySelector(".paginator").querySelectorAll("a")
@@ -113,9 +112,19 @@ export class FreeProxyCzSourceService
   }
 
   async extract() {
-    const targetURL =
-      "http://free-proxy.cz/ru/proxylist/country/all/socks4/ping/all";
+    const urls = [
+      "http://free-proxy.cz/ru/proxylist/country/all/socks4/ping/all",
+      "http://free-proxy.cz/ru/proxylist/country/all/socks5/ping/all",
+    ];
+    const results = [];
+    for (const targetURL of urls) {
+      results.push(...(await this.extractURL(targetURL)));
+    }
+    const finalResults = Array.from(new Set(results));
+    return finalResults;
+  }
 
+  async extractURL(targetURL: string) {
     const { pagesLinks, result } = await this.processURL(
       targetURL,
       async (page) => {
@@ -125,17 +134,19 @@ export class FreeProxyCzSourceService
       }
     );
 
-    console.log(`Get ${result.length} proxies and ${pagesLinks.length} pages from first page.`)
+    console.log(
+      `Get ${result.length} proxies and ${pagesLinks.length} pages from first page.`
+    );
 
     for (const link of pagesLinks) {
       const pageResult = await this.processURL(link.href, async (page) => {
         return this.extractProxies(page);
-      });      
+      });
       result.push(...pageResult);
-      console.log(`Get ${pageResult.length} proxies pages from ${link.text} page. ${result.length} total.`)
+      console.log(
+        `Get ${pageResult.length} proxies pages from ${link.text} page. ${result.length} total.`
+      );
     }
     return result;
   }
-
-
 }

@@ -11,10 +11,7 @@ import {
 import { InjectRepository } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
 import { Repository } from "typeorm";
-import {
-  Proxy,
-  ProxySourcesView,
-} from "../entities";
+import { Proxy, ProxySourcesView, ProxyTestRun } from "../entities";
 
 const sleep = (t) =>
   new Promise<void>((resolve) => setTimeout(() => resolve(), t));
@@ -30,7 +27,9 @@ export class ProxyResolver {
   constructor(
     @InjectRepository(Proxy) private readonly proxyRepo: Repository<Proxy>,
     @InjectRepository(ProxySourcesView)
-    private readonly proxySourcesViewRepo: Repository<ProxySourcesView>
+    private readonly proxySourcesViewRepo: Repository<ProxySourcesView>,
+    @InjectRepository(ProxyTestRun) 
+    private readonly proxyTestRunRepo: Repository<ProxyTestRun>
   ) {}
 
   @Query((returns) => [Proxy])
@@ -38,7 +37,6 @@ export class ProxyResolver {
     @Args("take", { type: () => Int }) take: number,
     @Args("skip", { type: () => Int }) skip: number
   ) {
-    // await sleep(1000);
     return await this.proxyRepo.find({ take, skip, order: { id: "ASC" } });
   }
 
@@ -69,7 +67,6 @@ export class ProxyResolver {
 
   @ResolveField((returns) => [ProxySourcesView])
   async sources(@Parent() proxy: Proxy) {
-
     const proxyId = proxy.id;
 
     const res = await this.proxySourcesViewRepo.find({
@@ -86,6 +83,18 @@ export class ProxyResolver {
       relations: ["updates"],
     });
     return proxyWithUpdates.updates;
+  }
+
+  @ResolveField(returns=>Int)
+  async testsCountByTestType(
+    @Parent() proxy: Proxy,
+    @Args("testTypeId", { type: () => Int, nullable:true }) testTypeId?: number,
+    @Args("lastHours", { type: () => Int, nullable:true }) lastHours?: number
+  ) {
+    const query = this.proxyTestRunRepo.createQueryBuilder('test').where('test.testedProxyId = :proxyId', {proxyId:proxy.id})
+    if(Number.isInteger(testTypeId)) query.andWhere("test.testTypeId=:testTypeId", {testTypeId})
+    if(Number.isInteger(lastHours)) query.andWhere("test.runTime >= DATE_SUB(SYSDATE(), INTERVAL :lastHours HOUR)", {lastHours})   
+    return await query.getCount()   
   }
 
   @ResolveField()

@@ -9,6 +9,7 @@ type Proxy {
   updates: [ProxyListUpdate!]!
   testsRuns: [ProxyTestRun!]!
   sources: [ProxySourcesView!]!
+  testsCountByTestType(lastHours: Int, testTypeId: Int): Int!
 }
 
 type ProxyListUpdate {

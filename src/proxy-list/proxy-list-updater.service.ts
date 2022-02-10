@@ -52,12 +52,13 @@ export class ProxyListUpdaterService {
         isTimeToUpdate = true;
       }
 
-      if (isTimeToUpdate) {
+      if (isTimeToUpdate && !this.isUpddateInProgress.has(sourceItem.id)) {
         try {
           this.logger.info(
             `Begin update from proxy list source. Source name: '${sourceItem.name}'  `
           );
-          await this.updateSource(sourceItem.id);
+          this.isUpddateInProgress.add(sourceItem.id);
+          await this.updateSource(sourceItem.id).finally(()=>this.isUpddateInProgress.delete(sourceItem.id));
         } catch (error) {
           this.logger.error(
             error,
@@ -67,6 +68,8 @@ export class ProxyListUpdaterService {
       }
     }
   }
+
+  private isUpddateInProgress = new Set<number>()
 
   async updateSource(id: number) {
     const sourceItem = await this.proxyListSourceRepo.findOneOrFail(id);
@@ -115,8 +118,11 @@ export class ProxyListUpdaterService {
       newProxyListUpdate.loadedProxies = updatedProxyList;
     } catch (error) {
       const msg = `Proxy list web source '${sourceItem.name}' update error. \n Error message: ${error.message}`;
-      const err = new Error(msg);
-      newProxyListUpdate.error = new ApplicationError(err);
+      newProxyListUpdate.error = new ApplicationError({
+        name: error.name,
+        message: msg,
+        stack: error.stack,
+      });
       this.logger.error(error, msg);
     }
 

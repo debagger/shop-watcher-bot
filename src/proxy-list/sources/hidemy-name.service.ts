@@ -6,7 +6,7 @@ import { parse } from "node-html-parser";
 @Injectable()
 export class HidemyNameSourceService implements ProxyListSourceExtractorService {
     async extract(){
-        const url2 = new URL("https://hidemy.name/ru/proxy-list/?type=4&start=0");
+        const url2 = new URL("https://hidemy.name/ru/proxy-list/?type=45&start=0");
         const proxyList: string[] = [];
         let count = 0;
         while (true) {
