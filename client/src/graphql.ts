@@ -69,6 +69,9 @@ export type Proxy = {
   id: Scalars['Int'];
   port: Scalars['Int'];
   sources: Array<ProxySourcesView>;
+  successTestRate?: Maybe<Scalars['Float']>;
+  successTestsCount?: Maybe<Scalars['Int']>;
+  testsCount?: Maybe<Scalars['Int']>;
   testsRuns: Array<ProxyTestRun>;
   updates: Array<ProxyListUpdate>;
 };
@@ -92,6 +95,13 @@ export type ProxyListUpdate = {
   source: ProxyListSource;
   updateTime: Scalars['DateTime'];
 };
+
+export enum ProxyQuerySortEnum {
+  Id = 'id',
+  SuccessTestCount = 'successTestCount',
+  SuccessTestRate = 'successTestRate',
+  TestsCount = 'testsCount'
+}
 
 export type ProxySourcesView = {
   __typename?: 'ProxySourcesView';
@@ -140,6 +150,7 @@ export type Query = {
   proxies: Array<Proxy>;
   proxiesCount: Scalars['Int'];
   proxiesPage: PaginatedProxy;
+  proxyById: Proxy;
   proxyListSources: Array<ProxyListSource>;
   proxyListUpdates: Array<ProxyListUpdate>;
   proxyTesterWorkerState: ProxyTesterWorkerState;
@@ -150,14 +161,33 @@ export type Query = {
 
 
 export type QueryProxiesArgs = {
-  skip: Scalars['Int'];
+  descending?: InputMaybe<Scalars['Boolean']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
+  proxySourcesIds?: InputMaybe<Array<Scalars['Int']>>;
+  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']>>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
+  skip?: InputMaybe<Scalars['Int']>;
+  sortBy?: InputMaybe<ProxyQuerySortEnum>;
   take: Scalars['Int'];
 };
 
 
 export type QueryProxiesPageArgs = {
+  descending?: InputMaybe<Scalars['Boolean']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
   page: Scalars['Int'];
+  proxySourcesIds?: InputMaybe<Array<Scalars['Int']>>;
+  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']>>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
   rowsPerPage: Scalars['Int'];
+  sortBy?: InputMaybe<ProxyQuerySortEnum>;
+};
+
+
+export type QueryProxyByIdArgs = {
+  proxyId: Scalars['Int'];
 };
 
 
@@ -225,10 +255,14 @@ export type WorkerResult = {
 export type GetProxiesPageQueryVariables = Exact<{
   page: Scalars['Int'];
   rowsPerPage: Scalars['Int'];
+  sortBy?: InputMaybe<ProxyQuerySortEnum>;
+  descending?: InputMaybe<Scalars['Boolean']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
 }>;
 
 
-export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
+export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, testsCount?: number | null | undefined, successTestsCount?: number | null | undefined, successTestRate?: number | null | undefined, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
 
 export type KnownHostsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -266,8 +300,15 @@ export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typena
 
 
 export const GetProxiesPage = gql`
-    query getProxiesPage($page: Int!, $rowsPerPage: Int!) {
-  proxiesPage(page: $page, rowsPerPage: $rowsPerPage) {
+    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean) {
+  proxiesPage(
+    page: $page
+    rowsPerPage: $rowsPerPage
+    sortBy: $sortBy
+    descending: $descending
+    hasNoTests: $hasNoTests
+    hasSuccessTests: $hasSuccessTests
+  ) {
     pagination {
       page
       rowsPerPage
@@ -277,6 +318,9 @@ export const GetProxiesPage = gql`
       id
       host
       port
+      testsCount
+      successTestsCount
+      successTestRate
       sources {
         source {
           name
@@ -394,8 +438,15 @@ export const TelegramUser = gql`
     `;
 
 export const GetProxiesPageDocument = gql`
-    query getProxiesPage($page: Int!, $rowsPerPage: Int!) {
-  proxiesPage(page: $page, rowsPerPage: $rowsPerPage) {
+    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean) {
+  proxiesPage(
+    page: $page
+    rowsPerPage: $rowsPerPage
+    sortBy: $sortBy
+    descending: $descending
+    hasNoTests: $hasNoTests
+    hasSuccessTests: $hasSuccessTests
+  ) {
     pagination {
       page
       rowsPerPage
@@ -405,6 +456,9 @@ export const GetProxiesPageDocument = gql`
       id
       host
       port
+      testsCount
+      successTestsCount
+      successTestRate
       sources {
         source {
           name
@@ -435,6 +489,10 @@ export const GetProxiesPageDocument = gql`
  * const { result, loading, error } = useGetProxiesPageQuery({
  *   page: // value for 'page'
  *   rowsPerPage: // value for 'rowsPerPage'
+ *   sortBy: // value for 'sortBy'
+ *   descending: // value for 'descending'
+ *   hasNoTests: // value for 'hasNoTests'
+ *   hasSuccessTests: // value for 'hasSuccessTests'
  * });
  */
 export function useGetProxiesPageQuery(variables: GetProxiesPageQueryVariables | VueCompositionApi.Ref<GetProxiesPageQueryVariables> | ReactiveFunction<GetProxiesPageQueryVariables>, options: VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> = {}) {

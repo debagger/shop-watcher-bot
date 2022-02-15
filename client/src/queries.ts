@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 
 export const proxiesPageQuery = gql`
-  query getProxiesPage($page: Int!, $rowsPerPage: Int!) {
-    proxiesPage(page: $page, rowsPerPage: $rowsPerPage) {
+  query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests:Boolean, $hasSuccessTests:Boolean) {
+    proxiesPage(page: $page, rowsPerPage: $rowsPerPage, sortBy: $sortBy, descending: $descending, hasNoTests:$hasNoTests, hasSuccessTests:$hasSuccessTests) {
       pagination {
         page
         rowsPerPage
@@ -12,6 +12,9 @@ export const proxiesPageQuery = gql`
         id
         host
         port
+        testsCount
+        successTestsCount
+        successTestRate
         sources {
           source {
             name

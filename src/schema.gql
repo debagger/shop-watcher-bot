@@ -9,7 +9,9 @@ type Proxy {
   updates: [ProxyListUpdate!]!
   testsRuns: [ProxyTestRun!]!
   sources: [ProxySourcesView!]!
-  testsCountByTestType(lastHours: Int, testTypeId: Int): Int!
+  testsCount: Int
+  successTestsCount: Int
+  successTestRate: Float
 }
 
 type ProxyListUpdate {
@@ -143,11 +145,19 @@ type Query {
   state: SiteCrawlerState!
   browserManagerState: BrowserManagerModel!
   proxyListSources: [ProxyListSource!]!
-  proxies(skip: Int!, take: Int!): [Proxy!]!
-  proxiesPage(rowsPerPage: Int!, page: Int!): PaginatedProxy!
+  proxies(proxySourcesIds: [Int!], proxyTestTypesIds: [Int!], proxyTestsHoursAgo: Int, hasNoTests: Boolean, hasSuccessTests: Boolean, sortBy: ProxyQuerySortEnum, descending: Boolean, take: Int!, skip: Int): [Proxy!]!
+  proxiesPage(proxySourcesIds: [Int!], proxyTestTypesIds: [Int!], proxyTestsHoursAgo: Int, hasNoTests: Boolean, hasSuccessTests: Boolean, sortBy: ProxyQuerySortEnum, descending: Boolean, page: Int!, rowsPerPage: Int!): PaginatedProxy!
+  proxyById(proxyId: Int!): Proxy!
   proxiesCount: Int!
   proxyListUpdates(skip: Int!, take: Int!): [ProxyListUpdate!]!
   proxyTesterWorkerState: ProxyTesterWorkerState!
+}
+
+enum ProxyQuerySortEnum {
+  id
+  testsCount
+  successTestCount
+  successTestRate
 }
 
 type Mutation {
