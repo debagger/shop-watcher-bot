@@ -23,14 +23,23 @@ export class ProxyTesterWorker {
   }
 
   private async work() {
-    for await (const iterator of this.taskSource) {
-      this._currentTask = iterator;
-      await iterator
-        .run(this.workerId)
-        .catch((err) =>
-          console.log(`WorkerId [${this.workerId}]: ${err.message}`)
-        )
-        .finally(() => (this._currentTask = null));
+    for await (const task of this.taskSource) {
+      this._currentTask = task;
+      let timeout: NodeJS.Timeout;
+      await Promise.any([
+        task
+          .run(this.workerId)
+          .catch((err) =>
+            console.log(`WorkerId [${this.workerId}]: ${err.message}`)
+          )
+          .finally(() => {
+            this._currentTask = null;
+            if (timeout) clearTimeout(timeout);
+          }),
+        new Promise<void>((resolve) => {
+          timeout = setTimeout(() => resolve(), 300000);
+        }),
+      ]);
     }
   }
 }
