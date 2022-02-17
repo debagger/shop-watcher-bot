@@ -101,18 +101,22 @@ export class ProxyResolver {
       .addSelect("(successTestsCount/testsCount)", "successTestRate")
       .addSelect("testsCount, successTestsCount");
     
-    const from_date = new Date().setHours(new Date().getHours() - 2);
+    const from_date = new Date()
+    from_date.setHours(from_date.getHours() - 2);
     console.log(from_date)
     query = query.leftJoin(
       (q) =>
-        q
-          .select("ptr.testedProxyId")
+        {let res = q
+          .select("testedProxyId")
           .addSelect(
-            "COUNT(*) testsCount, SUM(IF (ptr.okResult is not null, 1, 0)) successTestsCount"
+            "COUNT(*) testsCount, SUM(IF (okResult is not null, 1, 0)) successTestsCount"
           )
-          .from(ProxyTestRun, "ptr")
-          .where("ptr.runTime >= DATE_SUB(sysdate(), INTERVAL :hours HOUR)", {hours: queryArgs.proxyTestsHoursAgo})
-          .groupBy("ptr.testedProxyId"),
+          .disableEscaping().from(ProxyTestRun, "ignore index(IX_testedProxyId)")
+          if(queryArgs.proxyTestsHoursAgo)
+          {res = res.where("runTime >= DATE_SUB(:from_date, INTERVAL :hours HOUR)", {hours: queryArgs.proxyTestsHoursAgo, from_date})}
+          res = res.groupBy("testedProxyId")
+            return res
+        },
       "t",
       "p.id=t.testedProxyId"
     );

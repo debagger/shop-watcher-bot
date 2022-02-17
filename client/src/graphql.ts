@@ -259,6 +259,7 @@ export type GetProxiesPageQueryVariables = Exact<{
   descending?: InputMaybe<Scalars['Boolean']>;
   hasNoTests?: InputMaybe<Scalars['Boolean']>;
   hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
 }>;
 
 
@@ -300,7 +301,7 @@ export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typena
 
 
 export const GetProxiesPage = gql`
-    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean) {
+    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean, $proxyTestsHoursAgo: Int) {
   proxiesPage(
     page: $page
     rowsPerPage: $rowsPerPage
@@ -308,6 +309,7 @@ export const GetProxiesPage = gql`
     descending: $descending
     hasNoTests: $hasNoTests
     hasSuccessTests: $hasSuccessTests
+    proxyTestsHoursAgo: $proxyTestsHoursAgo
   ) {
     pagination {
       page
@@ -438,7 +440,7 @@ export const TelegramUser = gql`
     `;
 
 export const GetProxiesPageDocument = gql`
-    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean) {
+    query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean, $proxyTestsHoursAgo: Int) {
   proxiesPage(
     page: $page
     rowsPerPage: $rowsPerPage
@@ -446,6 +448,7 @@ export const GetProxiesPageDocument = gql`
     descending: $descending
     hasNoTests: $hasNoTests
     hasSuccessTests: $hasSuccessTests
+    proxyTestsHoursAgo: $proxyTestsHoursAgo
   ) {
     pagination {
       page
@@ -493,6 +496,7 @@ export const GetProxiesPageDocument = gql`
  *   descending: // value for 'descending'
  *   hasNoTests: // value for 'hasNoTests'
  *   hasSuccessTests: // value for 'hasSuccessTests'
+ *   proxyTestsHoursAgo: // value for 'proxyTestsHoursAgo'
  * });
  */
 export function useGetProxiesPageQuery(variables: GetProxiesPageQueryVariables | VueCompositionApi.Ref<GetProxiesPageQueryVariables> | ReactiveFunction<GetProxiesPageQueryVariables>, options: VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> = {}) {

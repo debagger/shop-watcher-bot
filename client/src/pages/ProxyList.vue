@@ -10,10 +10,40 @@
         <q-select :options="sortOptions" v-model="variables.sortBy" />
         <q-toggle v-model="variables.descending" label="Descending" />
       </q-card-section>
+      <q-separator />
       <q-card-section>
         <div class="text-overline">Tests modifier</div>
         <q-toggle v-model="variables.hasNoTests" label="Has no tests" />
-        <q-toggle v-model="variables.hasSuccessTests" label="Has success tests" />
+        <q-toggle
+          v-model="variables.hasSuccessTests"
+          label="Has success tests"
+        />
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <div class="text-overline">Tests interval</div>
+        <q-toggle v-model="testIntervalEnable" label="Enable" />
+        <br />
+        <q-badge color="grey-6">{{
+          testItervals[testIntervalIndex].label
+        }}</q-badge>
+        <q-slider
+          v-model="testItervalLabelIndex"
+          @change="
+            (val) => {
+              testIntervalIndex = val;
+            }
+          "
+          step="1"
+          :min="0"
+          :max="testItervals.length - 1"
+          :label-value="testItervals[testItervalLabelIndex].label"
+          label-always
+          markers
+          snap
+          switch-label-side
+          :disable="!testIntervalEnable"
+        />
       </q-card-section>
     </q-card>
     <q-table
@@ -65,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 
 import { QTable, date } from 'quasar';
 import {
@@ -90,7 +120,7 @@ export default defineComponent({
         label: 'Success tests count',
         field: 'successTestsCount',
       },
-      { name: 'tests', label: 'Tests' },
+      { name: 'tests', label: 'Success tests rate' },
     ];
     const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
     const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
@@ -99,7 +129,7 @@ export default defineComponent({
       page: 1,
       rowsPerPage: 10,
       sortBy: ProxyQuerySortEnum.Id,
-      descending:false
+      descending: false,
     });
 
     const onRequest: OnRequestType = (props) => {
@@ -107,10 +137,11 @@ export default defineComponent({
         variables.value = {
           page: props.pagination.page,
           rowsPerPage: props.pagination.rowsPerPage,
-          sortBy:variables.value?.sortBy,
+          sortBy: variables.value?.sortBy,
           descending: variables.value?.descending,
           hasNoTests: variables.value?.hasNoTests,
-          hasSuccessTests: variables.value?.hasSuccessTests
+          hasSuccessTests: variables.value?.hasSuccessTests,
+          proxyTestsHoursAgo: variables.value?.proxyTestsHoursAgo
         };
         pagination.value.page = props.pagination.page;
         pagination.value.rowsPerPage = props.pagination.rowsPerPage;
@@ -136,9 +167,44 @@ export default defineComponent({
       }
     });
 
-    const sortOptions = ref([ProxyQuerySortEnum.Id, ProxyQuerySortEnum.SuccessTestCount, ProxyQuerySortEnum.SuccessTestRate, ProxyQuerySortEnum.TestsCount]);
+    const sortOptions = ref([
+      ProxyQuerySortEnum.Id,
+      ProxyQuerySortEnum.SuccessTestCount,
+      ProxyQuerySortEnum.SuccessTestRate,
+      ProxyQuerySortEnum.TestsCount,
+    ]);
+
+    const testIntervalEnable = ref(false);
+    const testIntervalIndex = ref(0);
+    const testIntrvalValue = computed(() =>
+      testIntervalEnable.value
+        ? testItervals[testIntervalIndex.value].value
+        : null
+    );
+    watch(testIntrvalValue, (v) => {
+      console.log(v)
+      if (variables.value) variables.value.proxyTestsHoursAgo = v;
+    });
+
+    const testItervals = [
+      { label: '1 hour', value: 1 },
+      { label: '3 hours', value: 3 },
+      { label: '6 hours', value: 6 },
+      { label: '12 hours', value: 12 },
+      { label: '1 day', value: 24 },
+      { label: '3 days', value: 3 * 24 },
+      { label: '5 days', value: 5 * 24 },
+      { label: '1 week', value: 7 * 24 },
+      { label: '2 week', value: 2 * 7 * 24 },
+      { label: '4 week', value: 4 * 7 * 24 },
+      { label: '8 week', value: 8 * 7 * 24 },
+    ];
 
     return {
+      testItervalLabelIndex: ref(0),
+      testItervals,
+      testIntervalEnable,
+      testIntervalIndex,
       variables,
       sortOptions,
       columns,
