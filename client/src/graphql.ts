@@ -40,9 +40,15 @@ export type KnownHostModel = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  deleteProxy: Scalars['JSON'];
   run: Scalars['Boolean'];
   runSourceUpdate: Scalars['JSON'];
   stop: Scalars['Boolean'];
+};
+
+
+export type MutationDeleteProxyArgs = {
+  id: Scalars['Int'];
 };
 
 
@@ -67,6 +73,7 @@ export type Proxy = {
   __typename?: 'Proxy';
   host: Scalars['String'];
   id: Scalars['Int'];
+  lastSeenOnSourcesHoursAgo?: Maybe<Scalars['Float']>;
   port: Scalars['Int'];
   sources: Array<ProxySourcesView>;
   successTestRate?: Maybe<Scalars['Float']>;
@@ -98,6 +105,7 @@ export type ProxyListUpdate = {
 
 export enum ProxyQuerySortEnum {
   Id = 'id',
+  LastSeenOnSourcesHoursAgo = 'lastSeenOnSourcesHoursAgo',
   SuccessTestCount = 'successTestCount',
   SuccessTestRate = 'successTestRate',
   TestsCount = 'testsCount'
@@ -263,7 +271,7 @@ export type GetProxiesPageQueryVariables = Exact<{
 }>;
 
 
-export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, testsCount?: number | null | undefined, successTestsCount?: number | null | undefined, successTestRate?: number | null | undefined, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
+export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, lastSeenOnSourcesHoursAgo?: number | null | undefined, testsCount?: number | null | undefined, successTestsCount?: number | null | undefined, successTestRate?: number | null | undefined, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
 
 export type KnownHostsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -299,6 +307,13 @@ export type TelegramUserQueryVariables = Exact<{
 
 export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null | undefined, dialogs: Array<{ __typename?: 'TelegramChatDialog', id: number, inputMessage: string, startTime: any, answers?: Array<{ __typename?: 'TelegramBotAnswer', id: number, answerTime: any, text: string, extra?: any | null | undefined }> | null | undefined }> } };
 
+export type DeleteProxyMutationVariables = Exact<{
+  Id: Scalars['Int'];
+}>;
+
+
+export type DeleteProxyMutation = { __typename?: 'Mutation', deleteProxy: any };
+
 
 export const GetProxiesPage = gql`
     query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean, $proxyTestsHoursAgo: Int) {
@@ -320,6 +335,7 @@ export const GetProxiesPage = gql`
       id
       host
       port
+      lastSeenOnSourcesHoursAgo
       testsCount
       successTestsCount
       successTestRate
@@ -438,6 +454,11 @@ export const TelegramUser = gql`
   }
 }
     `;
+export const DeleteProxy = gql`
+    mutation deleteProxy($Id: Int!) {
+  deleteProxy(id: $Id)
+}
+    `;
 
 export const GetProxiesPageDocument = gql`
     query getProxiesPage($page: Int!, $rowsPerPage: Int!, $sortBy: ProxyQuerySortEnum, $descending: Boolean, $hasNoTests: Boolean, $hasSuccessTests: Boolean, $proxyTestsHoursAgo: Int) {
@@ -459,6 +480,7 @@ export const GetProxiesPageDocument = gql`
       id
       host
       port
+      lastSeenOnSourcesHoursAgo
       testsCount
       successTestsCount
       successTestRate
@@ -710,3 +732,30 @@ export function useTelegramUserQuery(variables: TelegramUserQueryVariables | Vue
   return VueApolloComposable.useQuery<TelegramUserQuery, TelegramUserQueryVariables>(TelegramUserDocument, variables, options);
 }
 export type TelegramUserQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<TelegramUserQuery, TelegramUserQueryVariables>;
+export const DeleteProxyDocument = gql`
+    mutation deleteProxy($Id: Int!) {
+  deleteProxy(id: $Id)
+}
+    `;
+
+/**
+ * __useDeleteProxyMutation__
+ *
+ * To run a mutation, you first call `useDeleteProxyMutation` within a Vue component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteProxyMutation` returns an object that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - Several other properties: https://v4.apollo.vuejs.org/api/use-mutation.html#return
+ *
+ * @param options that will be passed into the mutation, supported options are listed on: https://v4.apollo.vuejs.org/guide-composable/mutation.html#options;
+ *
+ * @example
+ * const { mutate, loading, error, onDone } = useDeleteProxyMutation({
+ *   variables: {
+ *     Id: // value for 'Id'
+ *   },
+ * });
+ */
+export function useDeleteProxyMutation(options: VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables> | ReactiveFunction<VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables>>) {
+  return VueApolloComposable.useMutation<DeleteProxyMutation, DeleteProxyMutationVariables>(DeleteProxyDocument, options);
+}
+export type DeleteProxyMutationCompositionFunctionResult = VueApolloComposable.UseMutationReturn<DeleteProxyMutation, DeleteProxyMutationVariables>;

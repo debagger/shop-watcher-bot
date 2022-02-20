@@ -10,11 +10,18 @@ import {
   Resolver,
   Field,
   registerEnumType,
+  Mutation,
 } from "@nestjs/graphql";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
 import { Repository } from "typeorm";
-import { Proxy, ProxySourcesView, ProxyTestRun } from "../entities";
+import {
+  Proxy,
+  ProxyListUpdate,
+  ProxySourcesView,
+  ProxyTestRun,
+} from "../entities";
+import { GraphQLJSON } from "graphql-scalars";
 
 const sleep = (t) =>
   new Promise<void>((resolve) => setTimeout(() => resolve(), t));
@@ -24,6 +31,7 @@ enum ProxyQuerySortEnum {
   testsCount = "testsCount",
   successTestCount = "successTestsCount",
   successTestRate = "successTestRate",
+  lastSeenOnSourcesHoursAgo = "lastSeenOnSourcesHoursAgo",
 }
 
 registerEnumType(ProxyQuerySortEnum, { name: "ProxyQuerySortEnum" });
@@ -97,42 +105,73 @@ export class ProxyResolver {
   private buildQuery(queryArgs: ProxyQueryArgs) {
     let query = this.proxyRepo
       .createQueryBuilder("p")
-      .select("p.*")
+      .setParameter("now", new Date())
+      .select("p.*");
+
+    query = query
+      .leftJoin(
+        (q) => {
+          let res = q
+            .select("testedProxyId")
+            .addSelect(
+              "COUNT(*) testsCount, SUM(IF (okResult is not null, 1, 0)) successTestsCount"
+            )
+            .disableEscaping()
+            .from(ProxyTestRun, "ignore index(IX_testedProxyId)");
+          if (queryArgs.proxyTestsHoursAgo) {
+            res = res.where("runTime >= DATE_SUB(:now, INTERVAL :hours HOUR)", {
+              hours: queryArgs.proxyTestsHoursAgo,
+            });
+          }
+          res = res.groupBy("testedProxyId");
+          return res;
+        },
+        "t",
+        "p.id=t.testedProxyId"
+      )
       .addSelect("(successTestsCount/testsCount)", "successTestRate")
       .addSelect("testsCount, successTestsCount");
-    
-    const from_date = new Date()
-    from_date.setHours(from_date.getHours() - 2);
-    console.log(from_date)
-    query = query.leftJoin(
-      (q) =>
-        {let res = q
-          .select("testedProxyId")
-          .addSelect(
-            "COUNT(*) testsCount, SUM(IF (okResult is not null, 1, 0)) successTestsCount"
-          )
-          .disableEscaping().from(ProxyTestRun, "ignore index(IX_testedProxyId)")
-          if(queryArgs.proxyTestsHoursAgo)
-          {res = res.where("runTime >= DATE_SUB(:from_date, INTERVAL :hours HOUR)", {hours: queryArgs.proxyTestsHoursAgo, from_date})}
-          res = res.groupBy("testedProxyId")
-            return res
-        },
-      "t",
-      "p.id=t.testedProxyId"
-    );
+
+    query = query
+      .leftJoin(
+        (q) =>
+          q
+            .select(
+              "t.proxyId, HOUR(TIMEDIFF(:now, t.lastSeen)) lastSeenOnSourcesHoursAgo"
+            )
+            .from(
+              (q) =>
+                q
+                  .select("psv.proxyId, MAX(plu.updateTime) lastSeen")
+                  .from(ProxySourcesView, "psv")
+                  .leftJoin(ProxyListUpdate, "plu", "psv.lastUpdateId=plu.id")
+                  .groupBy("psv.proxyId"),
+              "t"
+            ),
+        "ls",
+        "p.id = ls.proxyId"
+      )
+      .addSelect("lastSeenOnSourcesHoursAgo");
 
     if (typeof queryArgs.hasNoTests === "boolean")
       query = query.andWhere(
         `testsCount is ${queryArgs.hasNoTests ? "" : "not"} null`
       );
 
-    if (queryArgs.hasSuccessTests)
-      query = query.andWhere("successTestsCount>0");
-    if (queryArgs.sortBy)
+    if (typeof queryArgs.hasSuccessTests === "boolean")
+      query = query.andWhere(
+        `successTestsCount${queryArgs.hasSuccessTests ? ">" : "="}0`
+      );
+
+    if (queryArgs.sortBy){
       query = query.orderBy(
         queryArgs.sortBy,
         queryArgs.descending ? "DESC" : "ASC"
       );
+    if (queryArgs.sortBy !== ProxyQuerySortEnum.id) {
+      query = query.addOrderBy("id", queryArgs.descending ? "DESC" : "ASC");
+    }
+  }
     return query;
   }
 
@@ -175,6 +214,20 @@ export class ProxyResolver {
     return await this.proxyRepo.count();
   }
 
+  @Mutation((returns) => GraphQLJSON)
+  async deleteProxy(@Args("id", { type: () => Int }) id: number) {
+    const proxy = await this.proxyRepo.findOne(id);
+    if (proxy) {
+      proxy.testsRuns = [];
+      proxy.updates = [];
+      await this.proxyRepo.save(proxy);
+      const proxyResult = await this.proxyRepo.remove(proxy);
+      return proxy;
+    } else {
+      throw new Error(`Proxy id:${id} not found.`);
+    }
+  }
+
   @ResolveField((returns) => [ProxySourcesView])
   async sources(@Parent() proxy: Proxy) {
     const proxyId = proxy.id;
@@ -187,6 +240,11 @@ export class ProxyResolver {
     return res;
   }
 
+  @ResolveField((returns) => Float, { nullable: true })
+  lastSeenOnSourcesHoursAgo(@Parent() proxy: Proxy) {
+    return proxy["lastSeenOnSourcesHoursAgo"];
+  }
+
   @ResolveField()
   async updates(@Parent() proxy: Proxy) {
     const proxyWithUpdates = await this.proxyRepo.findOne(proxy.id, {
@@ -196,18 +254,18 @@ export class ProxyResolver {
   }
 
   @ResolveField((returns) => Int, { nullable: true })
-  async testsCount(@Parent() proxy: Proxy) {
-    return await proxy["testsCount"];
+  testsCount(@Parent() proxy: Proxy) {
+    return proxy["testsCount"];
   }
 
   @ResolveField((returns) => Int, { nullable: true })
-  async successTestsCount(@Parent() proxy: Proxy) {
-    return await proxy["successTestsCount"];
+  successTestsCount(@Parent() proxy: Proxy) {
+    return proxy["successTestsCount"];
   }
 
   @ResolveField((returns) => Float, { nullable: true })
-  async successTestRate(@Parent() proxy: Proxy) {
-    return await proxy["successTestRate"];
+  successTestRate(@Parent() proxy: Proxy) {
+    return proxy["successTestRate"];
   }
 
   @ResolveField()

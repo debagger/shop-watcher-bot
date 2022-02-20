@@ -179,9 +179,10 @@ export class BrowserManagerService {
         browseContext.activeRequests.add(requestContext);
 
         const start = performance.now();
-
+        let time: number
         const response = await axios(requestContext.axiosRequestConfig).finally(
           () => {
+            time = performance.now() - start
             browseContext.activeRequests.delete(requestContext);
           }
         );
@@ -189,7 +190,7 @@ export class BrowserManagerService {
         if (browseContext.isValidResponse(response)) {
           sources.forEach(({ cancel }) => cancel());
           this.setBestProxy(host, proxyAddress);
-          return { proxyAddress, response, time: performance.now() - start };
+          return { proxyAddress, response, time};
         } else {
           this.blacklistProxyForHost(proxyAddress, host);
           throw new Error(

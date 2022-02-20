@@ -13,8 +13,15 @@
       <q-separator />
       <q-card-section>
         <div class="text-overline">Tests modifier</div>
-        <q-toggle v-model="variables.hasNoTests" label="Has no tests" />
         <q-toggle
+          :indeterminate-value="null"
+          toggle-indeterminate
+          v-model="variables.hasNoTests"
+          label="Has no tests"
+        />
+        <q-toggle
+          :indeterminate-value="null"
+          toggle-indeterminate
           v-model="variables.hasSuccessTests"
           label="Has success tests"
         />
@@ -38,12 +45,20 @@
           :min="0"
           :max="testItervals.length - 1"
           :label-value="testItervals[testItervalLabelIndex].label"
-          label-always
           markers
+          label
           snap
           switch-label-side
           :disable="!testIntervalEnable"
         />
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <div class="text-h6">Actions</div>
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <q-btn @click="deleteSelectedProxies">Delete</q-btn>
       </q-card-section>
     </q-card>
     <q-table
@@ -53,6 +68,9 @@
       :loading="loading"
       v-model:pagination="pagination"
       @request="onRequest"
+      selection="multiple"
+      v-model:selected="selected"
+      :selected-rows-label="getSelectedString"
     >
       <template v-slot:body-cell-sources="props">
         <q-td :props="props">
@@ -91,6 +109,21 @@
         </q-td>
       </template>
     </q-table>
+
+    <q-dialog persistent v-model="proxyDeletion.show">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Proxy deletion progress</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-linear-progress
+            :value="proxyDeletion.progress"
+          ></q-linear-progress>
+          {{ proxyDeletion.message }}
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -102,6 +135,8 @@ import {
   useGetProxiesPageQuery,
   GetProxiesPageQuery,
   ProxyQuerySortEnum,
+  Proxy,
+  useDeleteProxyMutation,
 } from '../graphql';
 import { PropType, ReturnAsyncType } from '../type.tools';
 
@@ -114,6 +149,11 @@ export default defineComponent({
       { name: 'host', label: 'host', field: 'host' },
       { name: 'port', label: 'port', field: 'port' },
       { name: 'sources', label: 'Sources', align: 'left' },
+      {
+        name: 'LastSeenOnSourcesHoursAgo',
+        label: 'Last seen on sources hours ago',
+        field: 'lastSeenOnSourcesHoursAgo',
+      },
       { name: 'totalTests', label: 'Total tests', field: 'testsCount' },
       {
         name: 'successTests',
@@ -124,6 +164,8 @@ export default defineComponent({
     ];
     const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
     const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
+
+    const selected = ref<Proxy[]>([]);
 
     const { onResult, loading, variables, refetch } = useGetProxiesPageQuery({
       page: 1,
@@ -141,7 +183,7 @@ export default defineComponent({
           descending: variables.value?.descending,
           hasNoTests: variables.value?.hasNoTests,
           hasSuccessTests: variables.value?.hasSuccessTests,
-          proxyTestsHoursAgo: variables.value?.proxyTestsHoursAgo
+          proxyTestsHoursAgo: variables.value?.proxyTestsHoursAgo,
         };
         pagination.value.page = props.pagination.page;
         pagination.value.rowsPerPage = props.pagination.rowsPerPage;
@@ -172,6 +214,7 @@ export default defineComponent({
       ProxyQuerySortEnum.SuccessTestCount,
       ProxyQuerySortEnum.SuccessTestRate,
       ProxyQuerySortEnum.TestsCount,
+      ProxyQuerySortEnum.LastSeenOnSourcesHoursAgo,
     ]);
 
     const testIntervalEnable = ref(false);
@@ -182,7 +225,7 @@ export default defineComponent({
         : null
     );
     watch(testIntrvalValue, (v) => {
-      console.log(v)
+      console.log(v);
       if (variables.value) variables.value.proxyTestsHoursAgo = v;
     });
 
@@ -200,7 +243,43 @@ export default defineComponent({
       { label: '8 week', value: 8 * 7 * 24 },
     ];
 
+    const proxyDeletion = ref({
+      show: false,
+      progress: 0,
+      message: '',
+    });
+
+    const { mutate: deleteProxy } = useDeleteProxyMutation({});
+
+    const deleteSelectedProxies = async () => {
+      proxyDeletion.value.show = true;
+      try {
+        proxyDeletion.value.progress = 0;
+        proxyDeletion.value.message = '';
+        let count = 0;
+        for (const proxy of selected.value) {
+          try {
+            await deleteProxy({ Id: proxy.id });
+            proxyDeletion.value.message = `Proxy id: ${proxy.id} deleted`;
+          } catch (error: any) {
+            proxyDeletion.value.message = error.message;
+          }
+          ++count;
+          proxyDeletion.value.progress = count / selected.value.length;
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        selected.value = [];
+        await refetch(variables.value);
+        proxyDeletion.value.show = false;
+      }
+    };
+
     return {
+      deleteSelectedProxies,
+      proxyDeletion,
+      selected,
       testItervalLabelIndex: ref(0),
       testItervals,
       testIntervalEnable,
@@ -214,6 +293,13 @@ export default defineComponent({
       onRequest,
       date,
       tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      getSelectedString() {
+        return selected.value.length === 0
+          ? ''
+          : `${selected.value.length} record${
+              selected.value.length > 1 ? 's' : ''
+            } selected`;
+      },
     };
   },
 });

@@ -9,6 +9,7 @@ type Proxy {
   updates: [ProxyListUpdate!]!
   testsRuns: [ProxyTestRun!]!
   sources: [ProxySourcesView!]!
+  lastSeenOnSourcesHoursAgo: Float
   testsCount: Int
   successTestsCount: Int
   successTestRate: Float
@@ -158,10 +159,12 @@ enum ProxyQuerySortEnum {
   testsCount
   successTestCount
   successTestRate
+  lastSeenOnSourcesHoursAgo
 }
 
 type Mutation {
   runSourceUpdate(sourceId: Int!): JSON!
+  deleteProxy(id: Int!): JSON!
   run: Boolean!
   stop: Boolean!
 }

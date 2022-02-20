@@ -28,6 +28,7 @@ export const proxiesPageQuery = gql`
         id
         host
         port
+        lastSeenOnSourcesHoursAgo
         testsCount
         successTestsCount
         successTestRate
@@ -151,3 +152,9 @@ export const telegramUser = gql`
     }
   }
 `;
+
+export const deleteProxy = gql`
+mutation deleteProxy($Id:Int!) {
+  deleteProxy(id:$Id)
+}
+`
