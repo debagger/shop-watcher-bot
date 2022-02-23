@@ -71,6 +71,7 @@
       selection="multiple"
       v-model:selected="selected"
       :selected-rows-label="getSelectedString"
+      :rows-per-page-options = "[10,20,50,100,250,500]"
     >
       <template v-slot:body-cell-sources="props">
         <q-td :props="props">
