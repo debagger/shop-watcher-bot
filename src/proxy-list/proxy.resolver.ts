@@ -216,13 +216,14 @@ export class ProxyResolver {
 
   @Mutation((returns) => GraphQLJSON)
   async deleteProxy(@Args("id", { type: () => Int }) id: number) {
-    const proxy = await this.proxyRepo.findOne(id);
-    if (proxy) {
-      proxy.testsRuns = [];
-      proxy.updates = [];
-      await this.proxyRepo.save(proxy);
-      const proxyResult = await this.proxyRepo.remove(proxy);
-      return proxy;
+    const deletedProxy = await this.proxyRepo.findOne(id);
+    if (deletedProxy) {
+      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({testedProxy:deletedProxy})
+      deletedProxy.testsRuns = [];
+      deletedProxy.updates = [];
+      await this.proxyRepo.save(deletedProxy);
+      const proxyResult = await this.proxyRepo.remove(deletedProxy);
+      return {proxy: deletedProxy, proxyTestRunDeletionResult};
     } else {
       throw new Error(`Proxy id:${id} not found.`);
     }
