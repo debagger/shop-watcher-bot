@@ -90,20 +90,11 @@ export class ProxyTesterService implements OnModuleInit {
             const { host, port } = proxyListItem;
             const run = async (workerId: number) => {
               const result = await proxyTest({ host, port, protocol });
-              const proxyURL = `socks${protocol}://${host}:${port}`;
               const savedResult = await this.saveTestRunResult(result);
               const pub = new WorkerResult();
               pub.workerId = workerId;
               pub.result = savedResult;
               this.pubSub.publish("newTaskResult", { onTaskFinish: pub });
-              // if (result.okResult)
-              //   console.log(
-              //     `Worker [${workerId}] '${result.name}' <${proxyURL}> OK`
-              //   );
-              // if (result.errorResult)
-              //   console.log(
-              //     `Worker [${workerId}] '${result.name}' <${proxyURL}> ${result.errorResult.message}`
-              //   );
             };
             const newTask: CancelableTask = {
               run,
@@ -133,96 +124,4 @@ export class ProxyTesterService implements OnModuleInit {
   stop() {
     this._isStarted = false;
   }
-
-  // async checkAllProxies() {
-  //   const workersCount = 500;
-  //   const eventEmitter = new EventEmitter();
-
-  //   eventEmitter.setMaxListeners(workersCount);
-
-  //   const list = await this.proxyListRepo.find({
-  //     select: ["id", "host", "port"],
-  //     order: { id: "DESC" },
-  //   });
-
-  //   const tasks: (() => Promise<ProxyTestResultType>)[] = [];
-  //   for (const protocol of <[4, 5]>[4, 5]) {
-  //     for (const proxyListItem of list) {
-  //       for (const proxyTest of Object.values(ProxyTests)) {
-  //         const { host, port } = proxyListItem;
-  //         const newTask = () => proxyTest({ host, port, protocol });
-  //         tasks.push(newTask);
-  //       }
-  //     }
-  //   }
-
-  //   const totalTasks = tasks.length;
-
-  //   let cancelTimeout: NodeJS.Timeout;
-
-  //   const interval = setInterval(() => {
-  //     console.log(`${tasks.length}/${totalTasks} in queue`);
-  //     if (tasks.length === 0 && !cancelTimeout) {
-  //       cancelTimeout = setTimeout(() => {
-  //         console.log("Cancel event emitted");
-  //         eventEmitter.emit("cancel");
-  //       }, 120000);
-  //       console.log("No tasks in queue. Wait 2 minutes for cancel.");
-  //     }
-  //   }, 60000);
-
-  //   const worker = (workerIndex: number) => {
-  //     return new Promise<void>((resolve, reject) => {
-  //       const cancelListener = () => {
-  //         console.log(`Worker ${workerIndex} rejection on 'cancel' event`);
-  //         reject(new Error(`Worker ${workerIndex} cancelled`));
-  //       };
-  //       eventEmitter.on("cancel", cancelListener);
-
-  //       const executeTask = () => {
-  //         if (tasks.length > 0) {
-  //           const task = tasks.pop();
-  //           task()
-  //             .then((res) => {
-  //               const { name, protocol, host, port, errorResult, okResult } =
-  //                 res;
-  //               const proxyURL = `socks${protocol}://${host}:${port}`;
-  //               this.saveTestRunResult(res)
-  //                 .then(() =>
-  //                   console.log(
-  //                     `worker ${workerIndex}: ${name} ${proxyURL} ${
-  //                       okResult ? "OK" : ""
-  //                     }${errorResult ? errorResult.message : ""}`
-  //                   )
-  //                 )
-  //                 .catch((err) =>
-  //                   console.log(
-  //                     `worker ${workerIndex}: ${name} ${proxyURL} ${err.message}`
-  //                   )
-  //                 );
-  //             })
-  //             .catch((error) => {
-  //               console.log(`Worker ${workerIndex} error ${error.message}`);
-  //             })
-  //             .finally(() => {
-  //               executeTask();
-  //             });
-  //         } else {
-  //           eventEmitter.off("cancel", cancelListener);
-  //           console.log(`Worker ${workerIndex} finished`);
-  //           resolve();
-  //         }
-  //       };
-  //       executeTask();
-  //     });
-  //   };
-
-  //   const workers = Array(workersCount)
-  //     .fill(null)
-  //     .map((_, i) => worker(i).catch((err) => console.log(err.message)));
-
-  //   await Promise.all(workers);
-  //   if (cancelTimeout) clearTimeout(cancelTimeout);
-  //   clearInterval(interval);
-  // }
 }
