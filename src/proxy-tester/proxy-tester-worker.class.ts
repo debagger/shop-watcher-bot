@@ -37,7 +37,10 @@ export class ProxyTesterWorker {
             if (timeout) clearTimeout(timeout);
           }),
         new Promise<void>((resolve) => {
-          timeout = setTimeout(() => resolve(), 300000);
+          timeout = setTimeout(() => {
+            task.cancel()
+            resolve()
+          }, 300000);
         }),
       ]);
     }

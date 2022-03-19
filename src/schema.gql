@@ -67,7 +67,7 @@ type TelegramChatUser {
   language_code: String
   last_name: String
   username: String
-  dialogs(skip: Int!, take: Int!): [TelegramChatDialog!]!
+  dialogs(take: Int!, skip: Int!): [TelegramChatDialog!]!
 }
 
 type TelegramChatDialog {
@@ -150,7 +150,7 @@ type Query {
   proxiesPage(proxySourcesIds: [Int!], proxyTestTypesIds: [Int!], proxyTestsHoursAgo: Int, hasNoTests: Boolean, hasSuccessTests: Boolean, sortBy: ProxyQuerySortEnum, descending: Boolean, page: Int!, rowsPerPage: Int!): PaginatedProxy!
   proxyById(proxyId: Int!): Proxy!
   proxiesCount: Int!
-  proxyListUpdates(skip: Int!, take: Int!): [ProxyListUpdate!]!
+  proxyListUpdates(take: Int!, skip: Int!): [ProxyListUpdate!]!
   proxyTesterWorkerState: ProxyTesterWorkerState!
 }
 

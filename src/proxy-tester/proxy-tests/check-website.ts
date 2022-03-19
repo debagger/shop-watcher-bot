@@ -3,7 +3,8 @@ import { AxiosResponse } from "axios";
 import { SocksProxyAgent } from "socks-proxy-agent";
 import { ProxyTestArgs } from "./proxy-test.type";
 import { performance } from "perf_hooks";
-
+import * as tls from 'tls'
+import * as crypto from 'crypto'
 export async function checkWebsite(
   url: string,
   options: ProxyTestArgs,
@@ -15,12 +16,21 @@ export async function checkWebsite(
   };
   const timeout = 60000;
 
-  const httpsAgent = new SocksProxyAgent({ host, port, type, timeout });
+  const defaultCiphers = crypto.constants.defaultCoreCipherList.split(':');
+
+  const ciphers = [ //Chrome order
+    defaultCiphers[2],    
+    defaultCiphers[0],
+    defaultCiphers[1],
+    ...defaultCiphers.slice(3)
+].join(':');
+
+  const httpsAgent = new SocksProxyAgent({ host, port, type, timeout, tls:{ciphers} });
 
   const start = performance.now();
 
   const headers = {
-    "User-Agent":
+    "user-agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36",
     accept:
       "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -28,13 +38,14 @@ export async function checkWebsite(
     "cache-control": "no-cache",
     pragma: "no-cache",
     "upgrade-insecure-requests": "1",
+    "accept-ancoding": "gzip, deflate"
   };
 
   try {
     const response = await axios.get(url, {
       httpsAgent,
       timeout,
-      headers,
+      headers
     });
 
     result.duration_ms = performance.now() - start;

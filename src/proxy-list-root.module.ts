@@ -9,6 +9,7 @@ import * as Entities from './entities'
 import { env } from 'process'
 import { BrowserManagerModule } from './browser-manager/browser-manager.module';
 import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ProxyTesterModule } from './proxy-tester/proxy-tester.module';
@@ -69,9 +70,13 @@ const getDbConfigs = () => {
     }),
     LoggerModule.forRoot({exclude:[{method:RequestMethod.ALL, path:'/graphql'}]}),
     ConfigModule.forRoot(),
-    GraphQLModule.forRoot({
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      installSubscriptionHandlers: true,
+      subscriptions: {
+        'graphql-ws': true,
+        'subscriptions-transport-ws': true,
+      },
     }),
     ProxyListModule,
     BrowserManagerModule],

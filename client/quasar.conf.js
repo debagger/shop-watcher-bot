@@ -82,13 +82,13 @@ module.exports = configure(function (ctx) {
       },
       port: 2997,
       client: {
-        webSocketURL: 'wss://bot-dev.debagger.ru/ws',
+        webSocketURL: 'ws://localhost:2996/graphql',
       },
       proxy: {
         '/graphql': {
           target: 'http://localhost:2996',
           changeOrigin: true,
-          ws:true          
+          ws: true          
         },
       },
     },
