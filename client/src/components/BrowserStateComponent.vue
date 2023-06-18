@@ -1,38 +1,26 @@
 <template>
-  <div class="row" v-if="knownHosts">
-    <q-card
-      class="col-3 q-ma-sm"
-      v-for="host in knownHosts"
-      :key="host.hostName"
-    >
-      <q-card-section>
-        <p class="text-h6">{{ host.hostName }}</p>
-      </q-card-section>
-      <q-list class="q-pb-md">
-        <q-item
-          clickable="false"
-          v-for="proxy in host.proxiesBestList"
-          :key="proxy.proxyAddress"
-          dense
-        >
-          <q-item-section>
-            <q-item-label>{{ proxy.proxyAddress }}</q-item-label>
-            <q-linear-progress
-              size="md"
-              rounded
-              :value="proxy.rating / sumRate(host)"
-            />
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-card>
-  </div>
+      <div class="row fit row wrap justify-start items-start content-around" v-if="knownHosts">
+      <q-card class="col-auto self-stretch q-ma-sm" v-for="host in knownHosts" :key="host.hostName">
+        <q-card-section>
+          <p class="text-h6">{{ host.hostName }}</p>
+        </q-card-section>
+        <q-list class="q-pb-md">
+          <q-item v-for="proxy in host.proxiesBestList" :key="proxy.proxyAddress" dense>
+            <q-item-section no-wrap>
+              <q-item-label>{{ proxy.proxyAddress }}</q-item-label>
+              <q-linear-progress size="md" rounded :value="proxy.rating / sumRate(host)" />
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-card>
+    </div>
+  
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { useResult } from '@vue/apollo-composable';
-import {useKnownHostsQuery, KnownHostModel} from '../graphql'
+import { useKnownHostsQuery, KnownHostModel } from '../graphql'
 // import {Unpacked} from '../type.tools'
 
 export default defineComponent({
@@ -43,10 +31,10 @@ export default defineComponent({
     });
 
     const sumRate = (host: KnownHostModel) =>
-      host.proxiesBestList?host.proxiesBestList.reduce(
+      host.proxiesBestList ? host.proxiesBestList.reduce(
         (acc: number, item) => (acc += item.rating),
         0
-      ):Number.NaN;
+      ) : Number.NaN;
 
     const knownHosts = useResult(
       result,

@@ -13,125 +13,88 @@
       <q-separator />
       <q-card-section>
         <div class="text-overline">Tests modifier</div>
-        <q-toggle
-          :indeterminate-value="null"
-          toggle-indeterminate
-          v-model="variables.hasNoTests"
-          label="Has no tests"
-        />
-        <q-toggle
-          :indeterminate-value="null"
-          toggle-indeterminate
-          v-model="variables.hasSuccessTests"
-          label="Has success tests"
-        />
-      </q-card-section>
-      <q-separator />
-      <q-card-section>
-        <div class="text-overline">Tests interval</div>
-        <q-toggle v-model="testIntervalEnable" label="Enable" />
-        <br />
-        <q-badge color="grey-6">{{
-          testItervals[testIntervalIndex].label
-        }}</q-badge>
-        <q-slider
-          v-model="testItervalLabelIndex"
-          @change="
-            (val) => {
-              testIntervalIndex = val;
-            }
-          "
-          step="1"
-          :min="0"
-          :max="testItervals.length - 1"
-          :label-value="testItervals[testItervalLabelIndex].label"
-          markers
-          label
-          snap
-          switch-label-side
-          :disable="!testIntervalEnable"
-        />
-      </q-card-section>
-      <q-separator />
-      <q-card-section>
-        <div class="text-h6">Actions</div>
-      </q-card-section>
-      <q-separator />
-      <q-card-section>
-        <q-btn @click="deleteSelectedProxies">Delete</q-btn>
-      </q-card-section>
-    </q-card>
-    <q-table
-      class="col-10"
-      :columns="columns"
-      :rows="rows"
-      :loading="loading"
-      v-model:pagination="pagination"
-      @request="onRequest"
-      selection="multiple"
-      v-model:selected="selected"
-      :selected-rows-label="getSelectedString"
-      :rows-per-page-options = "[10,20,50,100,250,500]"
-    >
-      <template v-slot:body-cell-sources="props">
-        <q-td :props="props">
-          <q-list dense>
-            <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
-              <q-item-section>
-                <q-item-label overline
-                  >{{ sourceItem.source.name.toUpperCase() }}
-                </q-item-label>
-                <q-item-label>
-                  <q-badge>{{
-                    date.formatDate(
-                      sourceItem.firstUpdate.updateTime,
-                      'YYYY-MM-DD HH:mm:ss'
-                    )
-                  }}</q-badge
-                  >-<q-badge>{{
-                    date.formatDate(
-                      sourceItem.lastUpdate.updateTime,
-                      'YYYY-MM-DD HH:mm:ss'
-                    )
-                  }}</q-badge>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-td>
-      </template>
+                    <q-toggle :indeterminate-value="null" toggle-indeterminate v-model="variables.hasNoTests" label="Has no tests" />
+                    <q-toggle :indeterminate-value="null" toggle-indeterminate v-model="variables.hasSuccessTests"
+                      label="Has success tests" />
+                  </q-card-section>
+                  <q-separator />
+                  <q-card-section>
+                    <div class="text-overline">Tests interval</div>
+                    <q-toggle v-model="testIntervalEnable" label="Enable" />
+                    <br />
+                    <q-badge color="grey-6">{{
+                      testItervals[testIntervalIndex].label
+                    }}</q-badge>
+                    <q-slider v-model="testItervalLabelIndex" @change="(val) => {
+                      testIntervalIndex = val;
+                    }
+                      " :min="0" :max="testItervals.length - 1" :label-value="testItervals[testItervalLabelIndex].label" markers
+                      label snap switch-label-side :disable="!testIntervalEnable" />
+                  </q-card-section>
+                  <q-separator />
+                  <q-card-section>
+                    <div class="text-h6">Actions</div>
+                  </q-card-section>
+                  <q-separator />
+                  <q-card-section>
+                    <q-btn @click="deleteSelectedProxies">Delete</q-btn>
+                  </q-card-section>
+                </q-card>
+                <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" v-model:pagination="pagination"
+                  @request="onRequest" selection="multiple" v-model:selected="selected" :selected-rows-label="getSelectedString"
+                  :rows-per-page-options="[10, 20, 50, 100, 250, 500]">
+                  <template v-slot:body-cell-sources="props">
+                    <q-td :props="props">
+                      <q-list dense>
+                        <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
+                          <q-item-section>
+                            <q-item-label overline>{{ sourceItem.source.name.toUpperCase() }}
+                            </q-item-label>
+                            <q-item-label>
+                              <q-badge>{{
+                                date.formatDate(
+                                  sourceItem.firstUpdate.updateTime,
+                                  'YYYY-MM-DD HH:mm:ss'
+                                )
+                              }}</q-badge>-<q-badge>{{
+  date.formatDate(
+    sourceItem.lastUpdate.updateTime,
+    'YYYY-MM-DD HH:mm:ss'
+  )
+}}</q-badge>
+                            </q-item-label>
+                          </q-item-section>
+                        </q-item>
+                      </q-list>
+                    </q-td>
+                  </template>
 
-      <template v-slot:body-cell-tests="props">
-        <q-td :props="props">
-          <q-linear-progress
-            v-if="props.row.successTestRate"
-            :value="props.row.successTestRate"
-          />
-        </q-td>
-      </template>
-    </q-table>
+                  <template v-slot:body-cell-tests="props">
+                    <q-td :props="props">
+                      <q-linear-progress v-if="props.row.successTestRate" :value="props.row.successTestRate" />
+                    </q-td>
+                  </template>
+                </q-table>
 
-    <q-dialog persistent v-model="proxyDeletion.show">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Proxy deletion progress</div>
-        </q-card-section>
+                <q-dialog persistent v-model="proxyDeletion.show">
+                  <q-card>
+                    <q-card-section>
+                      <div class="text-h6">Proxy deletion progress</div>
+                    </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <q-linear-progress
-            :value="proxyDeletion.progress"
-          ></q-linear-progress>
-          {{ proxyDeletion.message }}
-        </q-card-section>
-      </q-card>
-    </q-dialog>
-  </q-page>
+                    <q-card-section class="q-pt-none">
+                      <q-linear-progress :value="proxyDeletion.progress"></q-linear-progress>
+                      {{ proxyDeletion.message }}
+                    </q-card-section>
+                  </q-card>
+                </q-dialog>
+              </q-page>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed, watch } from 'vue';
 
-import { QTable, date } from 'quasar';
+import { QTable, QTableProps, date } from 'quasar';
 import {
   useGetProxiesPageQuery,
   GetProxiesPageQuery,
@@ -139,17 +102,18 @@ import {
   Proxy,
   useDeleteProxyMutation,
 } from '../graphql';
+// import { useRouter } from 'vue-router'
 import { PropType, ReturnAsyncType } from '../type.tools';
 
 type OnRequestType = PropType<QTable, 'requestServerInteraction'>;
 
 export default defineComponent({
   setup() {
-    const columns = [
+    const columns: QTableProps['columns'] = [
       { name: 'id', label: 'id', field: 'id' },
       { name: 'host', label: 'host', field: 'host' },
       { name: 'port', label: 'port', field: 'port' },
-      { name: 'sources', label: 'Sources', align: 'left' },
+      { name: 'sources', label: 'Sources', align: 'left', field: r => r },
       {
         name: 'LastSeenOnSourcesHoursAgo',
         label: 'Last seen on sources hours ago',
@@ -161,9 +125,11 @@ export default defineComponent({
         label: 'Success tests count',
         field: 'successTestsCount',
       },
-      { name: 'tests', label: 'Success tests rate' },
+      { name: 'tests', label: 'Success tests rate', field: r => r },
     ];
-    const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: 1000 });
+
+    const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: -1 });
+
     const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
 
     const selected = ref<Proxy[]>([]);
@@ -176,19 +142,17 @@ export default defineComponent({
     });
 
     const onRequest: OnRequestType = (props) => {
-      if (props?.pagination?.page && props?.pagination?.rowsPerPage) {
-        variables.value = {
-          page: props.pagination.page,
-          rowsPerPage: props.pagination.rowsPerPage,
-          sortBy: variables.value?.sortBy,
-          descending: variables.value?.descending,
-          hasNoTests: variables.value?.hasNoTests,
-          hasSuccessTests: variables.value?.hasSuccessTests,
-          proxyTestsHoursAgo: variables.value?.proxyTestsHoursAgo,
-        };
-        pagination.value.page = props.pagination.page;
-        pagination.value.rowsPerPage = props.pagination.rowsPerPage;
-      }
+      if (!props) return
+      if (!props.pagination) return;
+      const { page, rowsPerPage } = props.pagination
+
+      variables.value = {
+        ...variables.value,
+        page: page || 1,
+        rowsPerPage: rowsPerPage || 10
+      };
+      pagination.value.page = page || 1;
+      pagination.value.rowsPerPage = rowsPerPage || 10;
     };
 
     type RefetchReturnType = ReturnAsyncType<typeof refetch>;
@@ -220,13 +184,12 @@ export default defineComponent({
 
     const testIntervalEnable = ref(false);
     const testIntervalIndex = ref(0);
-    const testIntrvalValue = computed(() =>
+    const testIntervalValue = computed(() =>
       testIntervalEnable.value
         ? testItervals[testIntervalIndex.value].value
         : null
     );
-    watch(testIntrvalValue, (v) => {
-      console.log(v);
+    watch(testIntervalValue, (v) => {
       if (variables.value) variables.value.proxyTestsHoursAgo = v;
     });
 
@@ -285,7 +248,7 @@ export default defineComponent({
       testItervals,
       testIntervalEnable,
       testIntervalIndex,
-      variables,
+      variables: variables || {},
       sortOptions,
       columns,
       rows,
@@ -297,9 +260,8 @@ export default defineComponent({
       getSelectedString() {
         return selected.value.length === 0
           ? ''
-          : `${selected.value.length} record${
-              selected.value.length > 1 ? 's' : ''
-            } selected`;
+          : `${selected.value.length} record${selected.value.length > 1 ? 's' : ''
+          } selected`;
       },
     };
   },

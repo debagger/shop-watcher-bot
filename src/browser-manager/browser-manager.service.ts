@@ -286,10 +286,16 @@ export class BrowserManagerService {
       this.browserRequestInteceptor(request, context, page)
     );
 
-    const result = await action(page, context);
+    try {
+      const result = await action(page, context);
 
-    await page.close();
-    browser.disconnect();
-    return result;
+      await page.close();
+      browser.disconnect();
+      return result;
+  
+    } catch (error) {
+            
+    }
+
   }
 }
