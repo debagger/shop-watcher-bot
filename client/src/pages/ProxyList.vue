@@ -4,87 +4,30 @@
       <q-card-section>
         <div class="text-h6">Filters</div>
       </q-card-section>
+
       <q-separator />
-      <q-card-section>
-        <div class="text-overline">Sort by</div>
-        <q-select :options="sortOptions" v-model="variables.sortBy" />
-        <q-toggle v-model="variables.descending" label="Descending" />
-      </q-card-section>
-      <q-separator />
-      <q-card-section>
-        <div class="text-overline">Tests modifier</div>
-                    <q-toggle :indeterminate-value="null" toggle-indeterminate v-model="variables.hasNoTests" label="Has no tests" />
-                    <q-toggle :indeterminate-value="null" toggle-indeterminate v-model="variables.hasSuccessTests"
-                      label="Has success tests" />
-                  </q-card-section>
-                  <q-separator />
-                  <q-card-section>
-                    <div class="text-overline">Tests interval</div>
-                    <q-toggle v-model="testIntervalEnable" label="Enable" />
-                    <br />
-                    <q-badge color="grey-6">{{
-                      testItervals[testIntervalIndex].label
-                    }}</q-badge>
-                    <q-slider v-model="testItervalLabelIndex" @change="(val) => {
-                      testIntervalIndex = val;
-                    }
-                      " :min="0" :max="testItervals.length - 1" :label-value="testItervals[testItervalLabelIndex].label" markers
-                      label snap switch-label-side :disable="!testIntervalEnable" />
-                  </q-card-section>
+                  <proxy-list-filters v-model:variables="variables" />
                   <q-separator />
                   <q-card-section>
                     <div class="text-h6">Actions</div>
                   </q-card-section>
                   <q-separator />
                   <q-card-section>
-                    <q-btn @click="deleteSelectedProxies">Delete</q-btn>
+                    <q-btn @click="deleteSelectedProxies">Delete({{ selected.length }})</q-btn>
                   </q-card-section>
                 </q-card>
-                <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" v-model:pagination="pagination"
-                  @request="onRequest" selection="multiple" v-model:selected="selected" :selected-rows-label="getSelectedString"
-                  :rows-per-page-options="[10, 20, 50, 100, 250, 500]">
-                  <template v-slot:body-cell-sources="props">
-                    <q-td :props="props">
-                      <q-list dense>
-                        <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
-                          <q-item-section>
-                            <q-item-label overline>{{ sourceItem.source.name.toUpperCase() }}
-                            </q-item-label>
-                            <q-item-label>
-                              <q-badge>{{
-                                date.formatDate(
-                                  sourceItem.firstUpdate.updateTime,
-                                  'YYYY-MM-DD HH:mm:ss'
-                                )
-                              }}</q-badge>-<q-badge>{{
-  date.formatDate(
-    sourceItem.lastUpdate.updateTime,
-    'YYYY-MM-DD HH:mm:ss'
-  )
-}}</q-badge>
-                            </q-item-label>
-                          </q-item-section>
-                        </q-item>
-                      </q-list>
-                    </q-td>
-                  </template>
 
-                  <template v-slot:body-cell-tests="props">
-                    <q-td :props="props">
-                      <q-linear-progress v-if="props.row.successTestRate" :value="props.row.successTestRate" />
-                    </q-td>
-                  </template>
-                </q-table>
+                <proxy-list-table :rows="rows" :total-rows-number="totalRowsNumber" v-model:selected="selected" :loading="loading" />
 
-                <q-dialog persistent v-model="proxyDeletion.show">
+                <q-dialog persistent v-model="proxyDeletionProgress.show">
                   <q-card>
                     <q-card-section>
                       <div class="text-h6">Proxy deletion progress</div>
                     </q-card-section>
 
                     <q-card-section class="q-pt-none">
-                      <q-linear-progress :value="proxyDeletion.progress"></q-linear-progress>
-                      {{ proxyDeletion.message }}
+                      <q-linear-progress :value="proxyDeletionProgress.progress"></q-linear-progress>
+                      {{ proxyDeletionProgress.message }}
                     </q-card-section>
                   </q-card>
                 </q-dialog>
@@ -92,89 +35,73 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, computed, watch } from 'vue';
+import { defineComponent, ref, onMounted, computed, toValue, readonly } from 'vue';
 
-import { QTable, QTableProps, date } from 'quasar';
 import {
   useGetProxiesPageQuery,
   GetProxiesPageQuery,
   ProxyQuerySortEnum,
   Proxy,
   useDeleteProxyMutation,
+  GetProxiesPageQueryVariables,
 } from '../graphql';
-// import { useRouter } from 'vue-router'
-import { PropType, ReturnAsyncType } from '../type.tools';
-
-type OnRequestType = PropType<QTable, 'requestServerInteraction'>;
+import { ReturnAsyncType } from '../type.tools';
+import { useProxyListPageRouteQuery } from './../components/ProxyList/ProxyListPageDefaults';
+import ProxyListFilters from './../components/ProxyList/ProxyListFilters.vue'
+import ProxyListTable from './../components/ProxyList/ProxyListTable.vue'
 
 export default defineComponent({
+  components: { ProxyListFilters, ProxyListTable },
   setup() {
-    const columns: QTableProps['columns'] = [
-      { name: 'id', label: 'id', field: 'id' },
-      { name: 'host', label: 'host', field: 'host' },
-      { name: 'port', label: 'port', field: 'port' },
-      { name: 'sources', label: 'Sources', align: 'left', field: r => r },
-      {
-        name: 'LastSeenOnSourcesHoursAgo',
-        label: 'Last seen on sources hours ago',
-        field: 'lastSeenOnSourcesHoursAgo',
-      },
-      { name: 'totalTests', label: 'Total tests', field: 'testsCount' },
-      {
-        name: 'successTests',
-        label: 'Success tests count',
-        field: 'successTestsCount',
-      },
-      { name: 'tests', label: 'Success tests rate', field: r => r },
-    ];
-
-    const pagination = ref({ page: 1, rowsPerPage: 10, rowsNumber: -1 });
 
     const rows = ref<GetProxiesPageQuery['proxiesPage']['rows']>([]);
 
     const selected = ref<Proxy[]>([]);
 
-    const { onResult, loading, variables, refetch } = useGetProxiesPageQuery({
-      page: 1,
-      rowsPerPage: 10,
-      sortBy: ProxyQuerySortEnum.Id,
-      descending: false,
-    });
+    const routeQueryData = useProxyListPageRouteQuery()
 
-    const onRequest: OnRequestType = (props) => {
-      if (!props) return
-      if (!props.pagination) return;
-      const { page, rowsPerPage } = props.pagination
+    const variables = computed<GetProxiesPageQueryVariables>(() => {
+      const res: GetProxiesPageQueryVariables = {
+        page: toValue(routeQueryData.page),
+        rowsPerPage: toValue(routeQueryData.rowsPerPage),
+        descending: toValue(routeQueryData.descending),
+        hasNoTests: toValue(routeQueryData.hasNoTests),
+        hasSuccessTests: toValue(routeQueryData.hasSuccessTests),
+        sortBy: toValue(routeQueryData.sortBy)
+      }
 
-      variables.value = {
-        ...variables.value,
-        page: page || 1,
-        rowsPerPage: rowsPerPage || 10
-      };
-      pagination.value.page = page || 1;
-      pagination.value.rowsPerPage = rowsPerPage || 10;
-    };
+      if (routeQueryData.testIntervalEnable.value === true)
+        res.proxyTestsHoursAgo = toValue(routeQueryData.proxyTestsHoursAgo)
+
+      return res
+    }
+    )
+
+    const { onResult, loading, refetch } = useGetProxiesPageQuery(variables);
+
+    const totalRowsNumber = ref(0)
 
     type RefetchReturnType = ReturnAsyncType<typeof refetch>;
 
     const update: (arg: RefetchReturnType) => void = ({ loading, data }) => {
       if (loading) return;
-      pagination.value.rowsNumber = data.proxiesPage.pagination.rowsNumber;
+      totalRowsNumber.value = data.proxiesPage.pagination.rowsNumber;
       rows.value = data.proxiesPage.rows;
+      selected.value = []
     };
 
     onResult(update);
 
     onMounted(async () => {
       loading.value = true;
-      const refetchPromise = refetch(variables.value);
+      const refetchPromise = refetch();
       if (refetchPromise) {
         const res = await refetchPromise.finally(() => (loading.value = false));
         update(res);
       }
     });
 
-    const sortOptions = ref([
+    const sortOptions = readonly([
       ProxyQuerySortEnum.Id,
       ProxyQuerySortEnum.SuccessTestCount,
       ProxyQuerySortEnum.SuccessTestRate,
@@ -182,81 +109,49 @@ export default defineComponent({
       ProxyQuerySortEnum.LastSeenOnSourcesHoursAgo,
     ]);
 
-    const testIntervalEnable = ref(false);
-    const testIntervalIndex = ref(0);
-    const testIntervalValue = computed(() =>
-      testIntervalEnable.value
-        ? testItervals[testIntervalIndex.value].value
-        : null
-    );
-    watch(testIntervalValue, (v) => {
-      if (variables.value) variables.value.proxyTestsHoursAgo = v;
-    });
-
-    const testItervals = [
-      { label: '1 hour', value: 1 },
-      { label: '3 hours', value: 3 },
-      { label: '6 hours', value: 6 },
-      { label: '12 hours', value: 12 },
-      { label: '1 day', value: 24 },
-      { label: '3 days', value: 3 * 24 },
-      { label: '5 days', value: 5 * 24 },
-      { label: '1 week', value: 7 * 24 },
-      { label: '2 week', value: 2 * 7 * 24 },
-      { label: '4 week', value: 4 * 7 * 24 },
-      { label: '8 week', value: 8 * 7 * 24 },
-    ];
-
-    const proxyDeletion = ref({
+    const proxyDeletionProgress = ref({
       show: false,
       progress: 0,
       message: '',
     });
-
     const { mutate: deleteProxy } = useDeleteProxyMutation({});
 
     const deleteSelectedProxies = async () => {
-      proxyDeletion.value.show = true;
+      proxyDeletionProgress.value.show = true;
       try {
-        proxyDeletion.value.progress = 0;
-        proxyDeletion.value.message = '';
+        proxyDeletionProgress.value.progress = 0;
+        proxyDeletionProgress.value.message = '';
         let count = 0;
         for (const proxy of selected.value) {
           try {
             await deleteProxy({ Id: proxy.id });
-            proxyDeletion.value.message = `Proxy id: ${proxy.id} deleted`;
+            proxyDeletionProgress.value.message = `Proxy id: ${proxy.id} deleted`;
           } catch (error: any) {
-            proxyDeletion.value.message = error.message;
+            proxyDeletionProgress.value.message = error.message;
           }
           ++count;
-          proxyDeletion.value.progress = count / selected.value.length;
+          proxyDeletionProgress.value.progress = count / selected.value.length;
         }
       } catch (error) {
         console.log(error);
       } finally {
         selected.value = [];
-        await refetch(variables.value);
-        proxyDeletion.value.show = false;
+        await refetch();
+        proxyDeletionProgress.value.show = false;
       }
     };
 
     return {
+      queryData: routeQueryData,
       deleteSelectedProxies,
-      proxyDeletion,
+      proxyDeletionProgress,
       selected,
       testItervalLabelIndex: ref(0),
-      testItervals,
-      testIntervalEnable,
-      testIntervalIndex,
-      variables: variables || {},
+      variables,
       sortOptions,
-      columns,
       rows,
-      pagination,
+      totalRowsNumber,
       loading,
-      onRequest,
-      date,
-      tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
       getSelectedString() {
         return selected.value.length === 0
           ? ''

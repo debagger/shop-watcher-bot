@@ -77,16 +77,17 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
     devServer: {
+      open: false,
       server: {
         type: 'http',
       },
       port: 2997,
       client: {
-        webSocketURL: 'ws://localhost:2996/graphql',
+        webSocketURL: 'auto://bot-dev.debagger.ru/ws',
       },
       proxy: {
         '/graphql': {
-          target: 'http://localhost:2996',
+          target: 'http://localhost:2996/graphql',
           changeOrigin: true,
           ws: true          
         },

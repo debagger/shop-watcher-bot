@@ -6,24 +6,26 @@ export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
+export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 export type ReactiveFunction<TParam> = () => TParam;
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: string;
-  String: string;
-  Boolean: boolean;
-  Int: number;
-  Float: number;
+  ID: { input: string | number; output: string; }
+  String: { input: string; output: string; }
+  Boolean: { input: boolean; output: boolean; }
+  Int: { input: number; output: number; }
+  Float: { input: number; output: number; }
   /** A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format. */
-  DateTime: any;
+  DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
-  JSON: any;
+  JSON: { input: any; output: any; }
 };
 
 export type BestProxyItemModel = {
   __typename?: 'BestProxyItemModel';
-  proxyAddress: Scalars['String'];
-  rating: Scalars['Float'];
+  proxyAddress: Scalars['String']['output'];
+  rating: Scalars['Float']['output'];
 };
 
 export type BrowserManagerModel = {
@@ -33,27 +35,27 @@ export type BrowserManagerModel = {
 
 export type KnownHostModel = {
   __typename?: 'KnownHostModel';
-  hostName: Scalars['String'];
+  hostName: Scalars['String']['output'];
   proxiesBestList?: Maybe<Array<BestProxyItemModel>>;
-  proxiesBlackList?: Maybe<Array<Scalars['String']>>;
+  proxiesBlackList?: Maybe<Array<Scalars['String']['output']>>;
 };
 
 export type Mutation = {
   __typename?: 'Mutation';
-  deleteProxy: Scalars['JSON'];
-  run: Scalars['Boolean'];
-  runSourceUpdate: Scalars['JSON'];
-  stop: Scalars['Boolean'];
+  deleteProxy: Scalars['JSON']['output'];
+  run: Scalars['Boolean']['output'];
+  runSourceUpdate: Scalars['JSON']['output'];
+  stop: Scalars['Boolean']['output'];
 };
 
 
 export type MutationDeleteProxyArgs = {
-  id: Scalars['Int'];
+  id: Scalars['Int']['input'];
 };
 
 
 export type MutationRunSourceUpdateArgs = {
-  sourceId: Scalars['Int'];
+  sourceId: Scalars['Int']['input'];
 };
 
 export type PaginatedProxy = {
@@ -64,43 +66,43 @@ export type PaginatedProxy = {
 
 export type Pagination = {
   __typename?: 'Pagination';
-  page: Scalars['Int'];
-  rowsNumber: Scalars['Int'];
-  rowsPerPage: Scalars['Int'];
+  page: Scalars['Int']['output'];
+  rowsNumber: Scalars['Int']['output'];
+  rowsPerPage: Scalars['Int']['output'];
 };
 
 export type Proxy = {
   __typename?: 'Proxy';
-  host: Scalars['String'];
-  id: Scalars['Int'];
-  lastSeenOnSourcesHoursAgo?: Maybe<Scalars['Float']>;
-  port: Scalars['Int'];
+  host: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  lastSeenOnSourcesHoursAgo?: Maybe<Scalars['Float']['output']>;
+  port: Scalars['Int']['output'];
   sources: Array<ProxySourcesView>;
-  successTestRate?: Maybe<Scalars['Float']>;
-  successTestsCount?: Maybe<Scalars['Int']>;
-  testsCount?: Maybe<Scalars['Int']>;
+  successTestRate?: Maybe<Scalars['Float']['output']>;
+  successTestsCount?: Maybe<Scalars['Int']['output']>;
+  testsCount?: Maybe<Scalars['Int']['output']>;
   testsRuns: Array<ProxyTestRun>;
   updates: Array<ProxyListUpdate>;
 };
 
 export type ProxyListSource = {
   __typename?: 'ProxyListSource';
-  id: Scalars['Int'];
+  id: Scalars['Int']['output'];
   lastUpdate: ProxyListUpdate;
-  name: Scalars['String'];
-  updateInterval: Scalars['Int'];
+  name: Scalars['String']['output'];
+  updateInterval: Scalars['Int']['output'];
   updates: Array<ProxyListUpdate>;
 };
 
 export type ProxyListUpdate = {
   __typename?: 'ProxyListUpdate';
-  error?: Maybe<Scalars['JSON']>;
-  id: Scalars['Int'];
+  error?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['Int']['output'];
   loadedProxies: Array<Proxy>;
   newProxies: Array<Proxy>;
-  newProxiesCount: Scalars['Int'];
+  newProxiesCount: Scalars['Int']['output'];
   source: ProxyListSource;
-  updateTime: Scalars['DateTime'];
+  updateTime: Scalars['DateTime']['output'];
 };
 
 export enum ProxyQuerySortEnum {
@@ -120,43 +122,43 @@ export type ProxySourcesView = {
 
 export type ProxyTestRun = {
   __typename?: 'ProxyTestRun';
-  duration_ms: Scalars['Float'];
-  errorResult?: Maybe<Scalars['JSON']>;
-  id: Scalars['Int'];
-  okResult?: Maybe<Scalars['JSON']>;
-  protocol: Scalars['Float'];
-  runTime: Scalars['DateTime'];
+  duration_ms: Scalars['Float']['output'];
+  errorResult?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['Int']['output'];
+  okResult?: Maybe<Scalars['JSON']['output']>;
+  protocol: Scalars['Float']['output'];
+  runTime: Scalars['DateTime']['output'];
   testType: ProxyTestType;
   testedProxy: Proxy;
 };
 
 export type ProxyTestType = {
   __typename?: 'ProxyTestType';
-  id: Scalars['Int'];
-  name: Scalars['String'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
   testRuns: Array<ProxyTestRun>;
 };
 
 export type ProxyTesterWorkerState = {
   __typename?: 'ProxyTesterWorkerState';
   currentTask?: Maybe<ProxyTesterWorkerTask>;
-  workerId: Scalars['Int'];
+  workerId: Scalars['Int']['output'];
   workers: Array<ProxyTesterWorkerState>;
 };
 
 export type ProxyTesterWorkerTask = {
   __typename?: 'ProxyTesterWorkerTask';
-  host: Scalars['String'];
-  name: Scalars['String'];
-  port: Scalars['Int'];
-  protocol: Scalars['String'];
+  host: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  port: Scalars['Int']['output'];
+  protocol: Scalars['String']['output'];
 };
 
 export type Query = {
   __typename?: 'Query';
   browserManagerState: BrowserManagerModel;
   proxies: Array<Proxy>;
-  proxiesCount: Scalars['Int'];
+  proxiesCount: Scalars['Int']['output'];
   proxiesPage: PaginatedProxy;
   proxyById: Proxy;
   proxyListSources: Array<ProxyListSource>;
@@ -169,49 +171,49 @@ export type Query = {
 
 
 export type QueryProxiesArgs = {
-  descending?: InputMaybe<Scalars['Boolean']>;
-  hasNoTests?: InputMaybe<Scalars['Boolean']>;
-  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
-  proxySourcesIds?: InputMaybe<Array<Scalars['Int']>>;
-  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']>>;
-  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
-  skip?: InputMaybe<Scalars['Int']>;
+  descending?: InputMaybe<Scalars['Boolean']['input']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']['input']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']['input']>;
+  proxySourcesIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']['input']>;
+  skip?: InputMaybe<Scalars['Int']['input']>;
   sortBy?: InputMaybe<ProxyQuerySortEnum>;
-  take: Scalars['Int'];
+  take: Scalars['Int']['input'];
 };
 
 
 export type QueryProxiesPageArgs = {
-  descending?: InputMaybe<Scalars['Boolean']>;
-  hasNoTests?: InputMaybe<Scalars['Boolean']>;
-  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
-  page: Scalars['Int'];
-  proxySourcesIds?: InputMaybe<Array<Scalars['Int']>>;
-  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']>>;
-  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
-  rowsPerPage: Scalars['Int'];
+  descending?: InputMaybe<Scalars['Boolean']['input']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']['input']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']['input']>;
+  page: Scalars['Int']['input'];
+  proxySourcesIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  proxyTestTypesIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']['input']>;
+  rowsPerPage: Scalars['Int']['input'];
   sortBy?: InputMaybe<ProxyQuerySortEnum>;
 };
 
 
 export type QueryProxyByIdArgs = {
-  proxyId: Scalars['Int'];
+  proxyId: Scalars['Int']['input'];
 };
 
 
 export type QueryProxyListUpdatesArgs = {
-  skip: Scalars['Int'];
-  take: Scalars['Int'];
+  skip: Scalars['Int']['input'];
+  take: Scalars['Int']['input'];
 };
 
 
 export type QueryTelegramUserArgs = {
-  userId: Scalars['Int'];
+  userId: Scalars['Int']['input'];
 };
 
 export type SiteCrawlerState = {
   __typename?: 'SiteCrawlerState';
-  pendingRequests: Array<Scalars['String']>;
+  pendingRequests: Array<Scalars['String']['output']>;
 };
 
 export type Subscription = {
@@ -221,94 +223,94 @@ export type Subscription = {
 
 export type TelegramBotAnswer = {
   __typename?: 'TelegramBotAnswer';
-  answerTime: Scalars['DateTime'];
-  extra?: Maybe<Scalars['JSON']>;
-  id: Scalars['Int'];
-  text: Scalars['String'];
+  answerTime: Scalars['DateTime']['output'];
+  extra?: Maybe<Scalars['JSON']['output']>;
+  id: Scalars['Int']['output'];
+  text: Scalars['String']['output'];
 };
 
 export type TelegramChatDialog = {
   __typename?: 'TelegramChatDialog';
   answers?: Maybe<Array<TelegramBotAnswer>>;
-  chatId: Scalars['Int'];
+  chatId: Scalars['Int']['output'];
   from: TelegramChatUser;
-  id: Scalars['Int'];
-  inputMessage: Scalars['String'];
-  startTime: Scalars['DateTime'];
+  id: Scalars['Int']['output'];
+  inputMessage: Scalars['String']['output'];
+  startTime: Scalars['DateTime']['output'];
 };
 
 export type TelegramChatUser = {
   __typename?: 'TelegramChatUser';
   dialogs: Array<TelegramChatDialog>;
-  first_name: Scalars['String'];
-  id: Scalars['Int'];
-  is_bot: Scalars['Boolean'];
-  language_code?: Maybe<Scalars['String']>;
-  last_name?: Maybe<Scalars['String']>;
-  username?: Maybe<Scalars['String']>;
+  first_name: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  is_bot: Scalars['Boolean']['output'];
+  language_code?: Maybe<Scalars['String']['output']>;
+  last_name?: Maybe<Scalars['String']['output']>;
+  username?: Maybe<Scalars['String']['output']>;
 };
 
 
 export type TelegramChatUserDialogsArgs = {
-  skip: Scalars['Int'];
-  take: Scalars['Int'];
+  skip: Scalars['Int']['input'];
+  take: Scalars['Int']['input'];
 };
 
 export type WorkerResult = {
   __typename?: 'WorkerResult';
   result: ProxyTestRun;
-  workerId: Scalars['Int'];
+  workerId: Scalars['Int']['output'];
 };
 
 export type GetProxiesPageQueryVariables = Exact<{
-  page: Scalars['Int'];
-  rowsPerPage: Scalars['Int'];
+  page: Scalars['Int']['input'];
+  rowsPerPage: Scalars['Int']['input'];
   sortBy?: InputMaybe<ProxyQuerySortEnum>;
-  descending?: InputMaybe<Scalars['Boolean']>;
-  hasNoTests?: InputMaybe<Scalars['Boolean']>;
-  hasSuccessTests?: InputMaybe<Scalars['Boolean']>;
-  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']>;
+  descending?: InputMaybe<Scalars['Boolean']['input']>;
+  hasNoTests?: InputMaybe<Scalars['Boolean']['input']>;
+  hasSuccessTests?: InputMaybe<Scalars['Boolean']['input']>;
+  proxyTestsHoursAgo?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
 
-export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, lastSeenOnSourcesHoursAgo?: number | null | undefined, testsCount?: number | null | undefined, successTestsCount?: number | null | undefined, successTestRate?: number | null | undefined, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
+export type GetProxiesPageQuery = { __typename?: 'Query', proxiesPage: { __typename?: 'PaginatedProxy', pagination: { __typename?: 'Pagination', page: number, rowsPerPage: number, rowsNumber: number }, rows: Array<{ __typename?: 'Proxy', id: number, host: string, port: number, lastSeenOnSourcesHoursAgo?: number | null, testsCount?: number | null, successTestsCount?: number | null, successTestRate?: number | null, sources: Array<{ __typename?: 'ProxySourcesView', source: { __typename?: 'ProxyListSource', name: string }, firstUpdate: { __typename?: 'ProxyListUpdate', updateTime: any }, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any } }> }> } };
 
 export type KnownHostsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type KnownHostsQuery = { __typename?: 'Query', browserManagerState: { __typename?: 'BrowserManagerModel', knownHosts: Array<{ __typename?: 'KnownHostModel', hostName: string, proxiesBlackList?: Array<string> | null | undefined, proxiesBestList?: Array<{ __typename?: 'BestProxyItemModel', proxyAddress: string, rating: number }> | null | undefined }> } };
+export type KnownHostsQuery = { __typename?: 'Query', browserManagerState: { __typename?: 'BrowserManagerModel', knownHosts: Array<{ __typename?: 'KnownHostModel', hostName: string, proxiesBlackList?: Array<string> | null, proxiesBestList?: Array<{ __typename?: 'BestProxyItemModel', proxyAddress: string, rating: number }> | null }> } };
 
 export type ProxyTesterWorkerStateQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProxyTesterWorkerStateQuery = { __typename?: 'Query', proxyTesterWorkerState: { __typename?: 'ProxyTesterWorkerState', workers: Array<{ __typename?: 'ProxyTesterWorkerState', workerId: number, currentTask?: { __typename?: 'ProxyTesterWorkerTask', host: string, port: number, protocol: string, name: string } | null | undefined }> } };
+export type ProxyTesterWorkerStateQuery = { __typename?: 'Query', proxyTesterWorkerState: { __typename?: 'ProxyTesterWorkerState', workers: Array<{ __typename?: 'ProxyTesterWorkerState', workerId: number, currentTask?: { __typename?: 'ProxyTesterWorkerTask', host: string, port: number, protocol: string, name: string } | null }> } };
 
 export type WorkerTaskFinishSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result: { __typename?: 'ProxyTestRun', okResult?: any | null | undefined, errorResult?: any | null | undefined, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } } };
+export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result: { __typename?: 'ProxyTestRun', okResult?: any | null, errorResult?: any | null, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } } };
 
 export type ProxyListSourcesWithLastUpdateQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ProxyListSourcesWithLastUpdateQuery = { __typename?: 'Query', proxyListSources: Array<{ __typename?: 'ProxyListSource', id: number, name: string, updateInterval: number, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any, newProxiesCount: number, error?: any | null | undefined, newProxies: Array<{ __typename?: 'Proxy', id: number, host: string, port: number }> } }> };
+export type ProxyListSourcesWithLastUpdateQuery = { __typename?: 'Query', proxyListSources: Array<{ __typename?: 'ProxyListSource', id: number, name: string, updateInterval: number, lastUpdate: { __typename?: 'ProxyListUpdate', updateTime: any, newProxiesCount: number, error?: any | null, newProxies: Array<{ __typename?: 'Proxy', id: number, host: string, port: number }> } }> };
 
 export type TelegramUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type TelegramUsersQuery = { __typename?: 'Query', telegramUsers: Array<{ __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null | undefined }> };
+export type TelegramUsersQuery = { __typename?: 'Query', telegramUsers: Array<{ __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null }> };
 
 export type TelegramUserQueryVariables = Exact<{
-  userId: Scalars['Int'];
-  take: Scalars['Int'];
-  skip: Scalars['Int'];
+  userId: Scalars['Int']['input'];
+  take: Scalars['Int']['input'];
+  skip: Scalars['Int']['input'];
 }>;
 
 
-export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null | undefined, dialogs: Array<{ __typename?: 'TelegramChatDialog', id: number, inputMessage: string, startTime: any, answers?: Array<{ __typename?: 'TelegramBotAnswer', id: number, answerTime: any, text: string, extra?: any | null | undefined }> | null | undefined }> } };
+export type TelegramUserQuery = { __typename?: 'Query', telegramUser: { __typename?: 'TelegramChatUser', id: number, first_name: string, username?: string | null, dialogs: Array<{ __typename?: 'TelegramChatDialog', id: number, inputMessage: string, startTime: any, answers?: Array<{ __typename?: 'TelegramBotAnswer', id: number, answerTime: any, text: string, extra?: any | null }> | null }> } };
 
 export type DeleteProxyMutationVariables = Exact<{
-  Id: Scalars['Int'];
+  Id: Scalars['Int']['input'];
 }>;
 
 
@@ -524,6 +526,9 @@ export const GetProxiesPageDocument = gql`
 export function useGetProxiesPageQuery(variables: GetProxiesPageQueryVariables | VueCompositionApi.Ref<GetProxiesPageQueryVariables> | ReactiveFunction<GetProxiesPageQueryVariables>, options: VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<GetProxiesPageQuery, GetProxiesPageQueryVariables>(GetProxiesPageDocument, variables, options);
 }
+export function useGetProxiesPageLazyQuery(variables: GetProxiesPageQueryVariables | VueCompositionApi.Ref<GetProxiesPageQueryVariables> | ReactiveFunction<GetProxiesPageQueryVariables>, options: VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<GetProxiesPageQuery, GetProxiesPageQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<GetProxiesPageQuery, GetProxiesPageQueryVariables>(GetProxiesPageDocument, variables, options);
+}
 export type GetProxiesPageQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<GetProxiesPageQuery, GetProxiesPageQueryVariables>;
 export const KnownHostsDocument = gql`
     query knownHosts {
@@ -554,6 +559,9 @@ export const KnownHostsDocument = gql`
  */
 export function useKnownHostsQuery(options: VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<KnownHostsQuery, KnownHostsQueryVariables>(KnownHostsDocument, {}, options);
+}
+export function useKnownHostsLazyQuery(options: VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<KnownHostsQuery, KnownHostsQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<KnownHostsQuery, KnownHostsQueryVariables>(KnownHostsDocument, {}, options);
 }
 export type KnownHostsQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<KnownHostsQuery, KnownHostsQueryVariables>;
 export const ProxyTesterWorkerStateDocument = gql`
@@ -586,6 +594,9 @@ export const ProxyTesterWorkerStateDocument = gql`
  */
 export function useProxyTesterWorkerStateQuery(options: VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>(ProxyTesterWorkerStateDocument, {}, options);
+}
+export function useProxyTesterWorkerStateLazyQuery(options: VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>(ProxyTesterWorkerStateDocument, {}, options);
 }
 export type ProxyTesterWorkerStateQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<ProxyTesterWorkerStateQuery, ProxyTesterWorkerStateQueryVariables>;
 export const WorkerTaskFinishDocument = gql`
@@ -663,6 +674,9 @@ export const ProxyListSourcesWithLastUpdateDocument = gql`
 export function useProxyListSourcesWithLastUpdateQuery(options: VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>(ProxyListSourcesWithLastUpdateDocument, {}, options);
 }
+export function useProxyListSourcesWithLastUpdateLazyQuery(options: VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>(ProxyListSourcesWithLastUpdateDocument, {}, options);
+}
 export type ProxyListSourcesWithLastUpdateQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<ProxyListSourcesWithLastUpdateQuery, ProxyListSourcesWithLastUpdateQueryVariables>;
 export const TelegramUsersDocument = gql`
     query telegramUsers {
@@ -688,6 +702,9 @@ export const TelegramUsersDocument = gql`
  */
 export function useTelegramUsersQuery(options: VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<TelegramUsersQuery, TelegramUsersQueryVariables>(TelegramUsersDocument, {}, options);
+}
+export function useTelegramUsersLazyQuery(options: VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUsersQuery, TelegramUsersQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<TelegramUsersQuery, TelegramUsersQueryVariables>(TelegramUsersDocument, {}, options);
 }
 export type TelegramUsersQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<TelegramUsersQuery, TelegramUsersQueryVariables>;
 export const TelegramUserDocument = gql`
@@ -731,6 +748,9 @@ export const TelegramUserDocument = gql`
 export function useTelegramUserQuery(variables: TelegramUserQueryVariables | VueCompositionApi.Ref<TelegramUserQueryVariables> | ReactiveFunction<TelegramUserQueryVariables>, options: VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> = {}) {
   return VueApolloComposable.useQuery<TelegramUserQuery, TelegramUserQueryVariables>(TelegramUserDocument, variables, options);
 }
+export function useTelegramUserLazyQuery(variables: TelegramUserQueryVariables | VueCompositionApi.Ref<TelegramUserQueryVariables> | ReactiveFunction<TelegramUserQueryVariables>, options: VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables> | VueCompositionApi.Ref<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> | ReactiveFunction<VueApolloComposable.UseQueryOptions<TelegramUserQuery, TelegramUserQueryVariables>> = {}) {
+  return VueApolloComposable.useLazyQuery<TelegramUserQuery, TelegramUserQueryVariables>(TelegramUserDocument, variables, options);
+}
 export type TelegramUserQueryCompositionFunctionResult = VueApolloComposable.UseQueryReturn<TelegramUserQuery, TelegramUserQueryVariables>;
 export const DeleteProxyDocument = gql`
     mutation deleteProxy($Id: Int!) {
@@ -755,7 +775,7 @@ export const DeleteProxyDocument = gql`
  *   },
  * });
  */
-export function useDeleteProxyMutation(options: VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables> | ReactiveFunction<VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables>>) {
+export function useDeleteProxyMutation(options: VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables> | ReactiveFunction<VueApolloComposable.UseMutationOptions<DeleteProxyMutation, DeleteProxyMutationVariables>> = {}) {
   return VueApolloComposable.useMutation<DeleteProxyMutation, DeleteProxyMutationVariables>(DeleteProxyDocument, options);
 }
 export type DeleteProxyMutationCompositionFunctionResult = VueApolloComposable.UseMutationReturn<DeleteProxyMutation, DeleteProxyMutationVariables>;

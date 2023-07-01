@@ -76,6 +76,7 @@ module.exports = {
   // add your custom rules here
   rules: {
     'prefer-promise-reject-errors': 'off',
+    'vue/multi-word-component-names': 'off',
 
     // TypeScript
     quotes: ['warn', 'single', { avoidEscape: true }],
