@@ -4,7 +4,7 @@ networks:
     external: true 
 services:
   zarabot:
-    image: node:14
+    image: node:16
     entrypoint: /bin/bash
     command: >
       -c 
