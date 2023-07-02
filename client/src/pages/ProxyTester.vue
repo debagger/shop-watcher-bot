@@ -35,7 +35,7 @@ export default defineComponent({
   setup() {
     const { result: WorkerStateResult } = useProxyTesterWorkerStateQuery({ pollInterval: 1000 });
     const workers = computed(
-      (res) => WorkerStateResult.value?.proxyTesterWorkerState.workers ?? []
+      () => WorkerStateResult.value?.proxyTesterWorkerState.workers ?? []
     );
 
     const { result: TaskFinishedResult } = useWorkerTaskFinishSubscription();
