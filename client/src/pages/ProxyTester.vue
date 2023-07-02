@@ -13,12 +13,13 @@
           {{ worker.workerId }}
         </q-card-section>
         <q-separator vertical />
-        <q-card-section>
-          {{ worker.currentTask.name }} <br />
-          {{
-            `${worker.currentTask.protocol}://${worker.currentTask.host}:${worker.currentTask.port}`
-          }}
-        </q-card-section>
+          <q-card-section v-if="worker.currentTask">
+            {{ worker.currentTask.name }} <br />
+            {{
+              `${worker.currentTask.protocol}://${worker.currentTask.host}:${worker.currentTask.port}`
+            }}
+          </q-card-section>
+          <q-card-section v-else>No task</q-card-section>
       </q-card-section>
     </q-card>
   </q-page>

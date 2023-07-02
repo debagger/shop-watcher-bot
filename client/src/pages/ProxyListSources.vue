@@ -31,7 +31,7 @@
           <q-space />
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
-        <q-card-section>
+          <q-card-section v-if="errorContent">
           <div class="text-subtitle2">{{errorContent.message}}</div>
           <pre>{{errorContent.stack}}</pre>
         </q-card-section>
@@ -56,7 +56,7 @@ export default defineComponent({
   setup() {
     const { result } = useProxyListSourcesWithLastUpdateQuery();
     const proxyListSources = computed(() => result.value?.proxyListSources ?? []);
-    const errorContent = ref('');
+    const errorContent = ref<Error>();
     const errorDialogVisible = ref(false);
     const showErrorDialog = (src: ProxyListSource) => {
       errorContent.value = src.lastUpdate.error;

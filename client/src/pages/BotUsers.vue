@@ -34,7 +34,6 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from 'vue';
 import {
-  TelegramChatUser,
   useTelegramUsersQuery,
   useTelegramUserQuery,
 } from '../graphql';
@@ -60,7 +59,7 @@ export default defineComponent({
 
     return {
       telegramUsers,
-      selectUser(user: TelegramChatUser) {
+      selectUser(user: { id: number }) {
         selectedUserVar.value = { userId: user.id, take: 100, skip: 0 };
       },
       selectedUserDialogs,
