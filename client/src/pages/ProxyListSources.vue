@@ -41,12 +41,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { computed, defineComponent, ref } from 'vue';
 import {
   useProxyListSourcesWithLastUpdateQuery,
   ProxyListSourcesWithLastUpdateQuery,
 } from '../graphql';
-import { useResult } from '@vue/apollo-composable';
 import { Unpacked, PropType } from './../type.tools';
 
 type ProxyListSource = Unpacked<
@@ -56,7 +55,7 @@ type ProxyListSource = Unpacked<
 export default defineComponent({
   setup() {
     const { result } = useProxyListSourcesWithLastUpdateQuery();
-    const proxyListSources = useResult(result, [], (r) => r.proxyListSources);
+    const proxyListSources = computed(() => result.value?.proxyListSources ?? []);
     const errorContent = ref('');
     const errorDialogVisible = ref(false);
     const showErrorDialog = (src: ProxyListSource) => {

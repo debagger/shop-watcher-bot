@@ -18,8 +18,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
-import { useResult } from '@vue/apollo-composable';
+import { computed, defineComponent } from 'vue';
 import { useKnownHostsQuery, KnownHostModel } from '../graphql'
 // import {Unpacked} from '../type.tools'
 
@@ -36,10 +35,8 @@ export default defineComponent({
         0
       ) : Number.NaN;
 
-    const knownHosts = useResult(
-      result,
-      null,
-      (data) => data.browserManagerState.knownHosts
+    const knownHosts = computed(
+      () => result.value?.browserManagerState.knownHosts ?? []
     );
 
     return {
