@@ -1,10 +1,10 @@
 <template>
   <q-page class="q-pa-xl row items-start q-gutter-md">
-        <div :class="['col-md-12', item.result.okResult ? 'bg-light-green-2' : 'bg-red-2', 'q-ma-none', 'text-body2']"
-          v-for="item in finishedTasks" :key="item">
-          workerId: [{{ item.workerId }}] {{ item.result.testType.name }}
-          {{ `socks${item.result.protocol}://${item.result.testedProxy.host}:${item.result.testedProxy.port}` }}
-          {{ `${item.result.okResult ? 'OK' : item.result.errorResult.message}` }}
+    <div :class="['col-md-12', item.result.okResult ? 'bg-light-green-2' : 'bg-red-2', 'q-ma-none', 'text-body2']"
+      v-for="item in finishedTasks" :key="item">
+      workerId: [{{ item.workerId }}] {{ item.result.testType.name }}
+      {{ `socks${item.result.protocol}://${item.result.testedProxy.host}:${item.result.testedProxy.port}` }}
+      {{ `${item.result.okResult ? 'OK' : item.result.errorResult.message}` }}
     </div>
 
     <q-card v-for="worker in workers" :key="worker.workerId">
