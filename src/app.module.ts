@@ -80,6 +80,9 @@ const getDbConfigs = () => {
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      context: () => {
+        return { data: {} }
+      },
       subscriptions: {
         'graphql-ws': true,
         'subscriptions-transport-ws': true,

@@ -88,6 +88,7 @@ type TelegramBotAnswer {
 
 type ProxySourcesView {
   source: ProxyListSource!
+  proxy: Proxy!
   firstUpdate: ProxyListUpdate!
   lastUpdate: ProxyListUpdate!
 }

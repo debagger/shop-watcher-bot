@@ -1,6 +1,6 @@
 import { Field, ObjectType } from "@nestjs/graphql";
 import { JoinColumn, ManyToOne, ViewColumn, ViewEntity } from "typeorm";
-import { ProxyListSource, ProxyListUpdate } from ".";
+import { ProxyListSource, ProxyListUpdate, Proxy } from ".";
 
 @ObjectType()
 @ViewEntity({expression:`
@@ -21,6 +21,11 @@ export class ProxySourcesView{
     @ManyToOne(type=>ProxyListSource)
     @JoinColumn({name:'sourceId', referencedColumnName:'id'})
     source:ProxyListSource
+
+    @Field((type) => Proxy)
+    @ManyToOne(type => Proxy, p => p.sources)
+    @JoinColumn({ name: 'proxyId', referencedColumnName: 'id' })
+    proxy: Proxy
 
     @ViewColumn()
     firstUpdateId:number

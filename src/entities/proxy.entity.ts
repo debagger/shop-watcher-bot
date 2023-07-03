@@ -1,5 +1,5 @@
-import { Column, Entity, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
-import { ProxyTestRun, ProxyListUpdate } from ".";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { ProxyTestRun, ProxyListUpdate, ProxySourcesView } from ".";
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
@@ -25,4 +25,8 @@ export class Proxy {
     @Field(type=>[ProxyTestRun])
     @OneToMany(() => ProxyTestRun, testRun => testRun.testedProxy)
     testsRuns: ProxyTestRun[]
+
+    @OneToMany(() => ProxySourcesView, src => src.proxy)
+    @Field(type => [ProxySourcesView])
+    sources: ProxySourcesView[]
 }

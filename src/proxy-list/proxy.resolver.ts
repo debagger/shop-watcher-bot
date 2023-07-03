@@ -11,10 +11,11 @@ import {
   Field,
   registerEnumType,
   Mutation,
+  Context,
 } from "@nestjs/graphql";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
-import { Repository } from "typeorm";
+import { In, Repository } from "typeorm";
 import {
   Proxy,
   ProxyListUpdate,
@@ -90,7 +91,7 @@ export class ProxyResolver {
     private readonly proxySourcesViewRepo: Repository<ProxySourcesView>,
     @InjectRepository(ProxyTestRun)
     private readonly proxyTestRunRepo: Repository<ProxyTestRun>
-  ) {}
+  ) { }
 
   // set @from_t = DATE_SUB(sysdate(), INTERVAL 240 HOUR);
   // SELECT p.*, testsCount, successTestsCount, (successTestsCount/testsCount) AS `rate` FROM `proxy` `p`
@@ -107,7 +108,6 @@ export class ProxyResolver {
       .createQueryBuilder("p")
       .setParameter("now", new Date())
       .select("p.*");
-
     query = query
       .leftJoin(
         (q) => {
@@ -163,15 +163,16 @@ export class ProxyResolver {
         `successTestsCount${queryArgs.hasSuccessTests ? ">" : "="}0`
       );
 
-    if (queryArgs.sortBy){
+    if (queryArgs.sortBy) {
       query = query.orderBy(
         queryArgs.sortBy,
         queryArgs.descending ? "DESC" : "ASC"
       );
-    if (queryArgs.sortBy !== ProxyQuerySortEnum.id) {
-      query = query.addOrderBy("id", queryArgs.descending ? "DESC" : "ASC");
+      if (queryArgs.sortBy !== ProxyQuerySortEnum.id) {
+        query = query.addOrderBy("id", queryArgs.descending ? "DESC" : "ASC");
+      }
     }
-  }
+    query
     return query;
   }
 
@@ -185,7 +186,7 @@ export class ProxyResolver {
   }
 
   @Query((returns) => PaginatedProxy)
-  async proxiesPage(@Args() queryOptions: PaginatedProxiesQueryArgs) {
+  async proxiesPage(@Args() queryOptions: PaginatedProxiesQueryArgs, @Context() ctx: any) {
     const { page, rowsPerPage } = queryOptions;
     const skip = (page - 1) * rowsPerPage;
     const take = rowsPerPage;
@@ -199,8 +200,13 @@ export class ProxyResolver {
       rowsNumber: await query.getCount(),
     };
 
-    result.rows = await query.offset(skip).limit(take).getRawMany();
-
+    const pageQuery = query.offset(skip).limit(take);
+    const queryResult = await pageQuery.getRawMany();
+    result.rows = queryResult
+    ctx.data.sources = await this.proxySourcesViewRepo.find({
+      where: { proxyId: In([queryResult.map(i => i.id)]) },
+      relations: ["source", "firstUpdate", "lastUpdate"],
+    })
     return result;
   }
 
@@ -218,26 +224,20 @@ export class ProxyResolver {
   async deleteProxy(@Args("id", { type: () => Int }) id: number) {
     const deletedProxy = await this.proxyRepo.findOne(id);
     if (deletedProxy) {
-      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({testedProxy:deletedProxy})
+      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({ testedProxy: deletedProxy })
       deletedProxy.testsRuns = [];
       deletedProxy.updates = [];
       await this.proxyRepo.save(deletedProxy);
       const proxyResult = await this.proxyRepo.remove(deletedProxy);
-      return {proxy: deletedProxy, proxyTestRunDeletionResult};
+      return { proxy: deletedProxy, proxyTestRunDeletionResult };
     } else {
       throw new Error(`Proxy id:${id} not found.`);
     }
   }
 
   @ResolveField((returns) => [ProxySourcesView])
-  async sources(@Parent() proxy: Proxy) {
-    const proxyId = proxy.id;
-
-    const res = await this.proxySourcesViewRepo.find({
-      where: { proxyId },
-      relations: ["source", "firstUpdate", "lastUpdate"],
-    });
-
+  async sources(@Parent() proxy: Proxy, @Context() ctx: any) {
+    const res = ctx.data.sources.filter(i => i.proxyId === proxy.id)
     return res;
   }
 
