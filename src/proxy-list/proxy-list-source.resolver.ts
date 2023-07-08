@@ -32,9 +32,10 @@ export class ProxyListSourceResolver {
 
   @ResolveField((type) => [ProxyListUpdate])
   async updates(@Parent() proxyListSource: ProxyListSource) {
-    const proxyListSourceWithUpdates = await this.proxyListSourceRepo.findOne(
-      proxyListSource.id,
-      { relations: ["updates"] }
+    const proxyListSourceWithUpdates = await this.proxyListSourceRepo.findOne({
+      where: { id: proxyListSource.id },
+      relations: ["updates"]
+    }
     );
     return proxyListSourceWithUpdates.updates;
   }

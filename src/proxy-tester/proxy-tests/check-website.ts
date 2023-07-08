@@ -25,7 +25,7 @@ export async function checkWebsite(
     ...defaultCiphers.slice(3)
 ].join(':');
 
-  const httpsAgent = new SocksProxyAgent({ host, port, type, timeout, tls:{ciphers} });
+  const httpsAgent = new SocksProxyAgent({ host, port: String(port), type, timeout, tls: { ciphers } });
 
   const start = performance.now();
 

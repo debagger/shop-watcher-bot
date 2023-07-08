@@ -42,14 +42,16 @@ export class ProxyTesterService implements OnModuleInit {
     testResult: ProxyTestResultType
   ) => {
     let testType = await this.proxyTestTypeRepo.findOne({
+      where: {
       name: testResult.name,
+      }
     });
     if (!testType) {
       testType = this.proxyTestTypeRepo.create({ name: testResult.name });
       await this.proxyTestTypeRepo.save(testType);
     }
     const { host, port } = testResult;
-    const testedProxy = await this.proxyListRepo.findOne({ host, port });
+    const testedProxy = await this.proxyListRepo.findOne({ where: { host, port } });
     if (!testedProxy) return;
 
     const { protocol, errorResult, okResult, duration_ms } = testResult;

@@ -27,15 +27,19 @@ export class ProxyListUpdateResolver {
   }
 
   @ResolveField((returns) => [ProxyListSource])
-  async source(@Parent() proxyListUpdate: ProxyListUpdate) {
-    const result = await this.proxyListUpdateRepo.findOne(proxyListUpdate.id, {relations:['source']})
+  async source(@Parent() { id }: ProxyListUpdate) {
+    const result = await this.proxyListUpdateRepo.findOne({
+      where: { id },
+      relations: ['source']
+    })
     return result.source
   }
 
   @ResolveField((returns) => [Proxy])
-  async loadedProxies(@Parent() proxyListUpdate: ProxyListUpdate) {
+  async loadedProxies(@Parent() { id }: ProxyListUpdate) {
     const proxyListUpdateWithLoadedProxies =
-      await this.proxyListUpdateRepo.findOne(proxyListUpdate.id, {
+      await this.proxyListUpdateRepo.findOne({
+        where: { id },
         relations: ["loadedProxies"],
       });
     return proxyListUpdateWithLoadedProxies.loadedProxies;

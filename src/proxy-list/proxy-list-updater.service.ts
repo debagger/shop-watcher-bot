@@ -24,7 +24,9 @@ export class ProxyListUpdaterService {
     const knownSourcesNames = this.sourcesService.getSourcesNames();
     for (const sourceName of knownSourcesNames) {
       let sourceItem = await this.proxyListSourceRepo.findOne({
+        where: {
         name: sourceName,
+        }
       });
       let isTimeToUpdate = false;
       if (!sourceItem) {
@@ -37,7 +39,7 @@ export class ProxyListUpdaterService {
       if (updatesCount > 0) {
         const lastUpdateTime = (
           await this.proxyListUpdatesRepo.find({
-            select: ["updateTime"],
+            select: ["updateTime", 'source', 'id'],
             where: { source: { id: sourceItem.id } },
             order: { updateTime: "DESC" },
             take: 1,
@@ -72,7 +74,7 @@ export class ProxyListUpdaterService {
   private isUpddateInProgress = new Set<number>()
 
   async updateSource(id: number) {
-    const sourceItem = await this.proxyListSourceRepo.findOneOrFail(id);
+    const sourceItem = await this.proxyListSourceRepo.findOneOrFail({ where: { id } });
     if (!this.sourcesService.getSourcesNames().includes(sourceItem.name)) {
       throw new Error(
         `Proxy list source '${sourceItem.name}' is unknown and cant be updated.`

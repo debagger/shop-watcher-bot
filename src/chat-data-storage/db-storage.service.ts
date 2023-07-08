@@ -15,13 +15,13 @@ export class ChatDataDBStorageService implements ChatDataStorageInterface {
   }
 
   async getChatLinks(chatId: number): Promise<ChatLinks> {
-      const data = await this.chatDataRepo.findOne(chatId)
+    const data = await this.chatDataRepo.findOneBy({ chatId })
       if(data)    return data.chatData;
       return {}
   }
 
   async saveChatLinks(chatId: number, links: ChatLinks): Promise<void> {
-    let chatData = await this.chatDataRepo.findOne(chatId)
+    let chatData = await this.chatDataRepo.findOneBy({ chatId })
     if(!chatData) chatData = this.chatDataRepo.create({chatId})
     chatData.chatData = links
     await this.chatDataRepo.save(chatData)

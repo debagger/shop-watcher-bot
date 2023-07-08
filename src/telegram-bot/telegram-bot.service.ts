@@ -76,7 +76,7 @@ export class TelegramBotService
     bot.use(async (ctx, next) => {
       await this.telegramChatUserRepo.upsert(ctx.from, ["id"]);
 
-      const user = await this.telegramChatUserRepo.findOne(ctx.from.id);
+      const user = await this.telegramChatUserRepo.findOne({ where: { id: ctx.from.id } });
 
       let dialog: TelegramChatDialog;
       if (ctx.message) {
@@ -95,14 +95,14 @@ export class TelegramBotService
 
       const oldReply = ctx.reply.bind(ctx);
 
-      ctx.reply = async (text, extra) => {
+      ctx.reply = async (text: string, extra) => {
         if (dialog) {
-          await this.telegramBotAnswer.save({
+          await this.telegramBotAnswer.save([{
             dialog,
             answerTime: new Date(),
             extra,
             text,
-          });
+          }]);
         }
         return oldReply(text, extra);
       };
@@ -418,9 +418,9 @@ ${color.sizes.map((i) => `${i.disabled ? "❌" : "✅"} ${i.size}`).join("\n")}
 
     const oldSendMessage = telegram.sendMessage.bind(telegram);
 
-    telegram.sendMessage = async (chatId, text, extra) => {
+    telegram.sendMessage = async (chatId, text: string, extra) => {
       const lastDialog = await this.telegramChatDialogRepo.findOne({
-        where: { chatId },
+        where: { chatId: Number(chatId) },
         order: { startTime: "DESC" },
       });
 

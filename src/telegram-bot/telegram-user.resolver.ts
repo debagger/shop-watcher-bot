@@ -26,7 +26,7 @@ export class TelegramChatUserResolver {
 
   @Query((returns) => TelegramChatUser)
   async telegramUser(@Args("userId", { type: () => Int }) userId: number) {
-    return await this.telegramChatUserRepo.findOne(userId);
+    return await this.telegramChatUserRepo.findOne({ where: { id: userId } });
   }
 
   @ResolveField((type) => [TelegramChatDialog])

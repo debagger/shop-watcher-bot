@@ -1,0 +1,8 @@
+{
+  "ignore": {
+    "axios": {
+      "versions": "1.4.0",
+      "reason": ""
+    }
+  }
+}

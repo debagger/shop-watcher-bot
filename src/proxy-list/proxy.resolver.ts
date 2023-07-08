@@ -15,7 +15,7 @@ import {
 } from "@nestjs/graphql";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
-import { In, Repository } from "typeorm";
+import { FindOptionsWhere, In, Repository } from "typeorm";
 import {
   Proxy,
   ProxyListUpdate,
@@ -212,7 +212,7 @@ export class ProxyResolver {
 
   @Query((returns) => Proxy)
   async proxyById(@Args("proxyId", { type: () => Int }) proxyId: number) {
-    return this.proxyRepo.findOne(proxyId);
+    return this.proxyRepo.findOne({ where: { id: proxyId } });
   }
 
   @Query((returns) => Int)
@@ -222,9 +222,9 @@ export class ProxyResolver {
 
   @Mutation((returns) => GraphQLJSON)
   async deleteProxy(@Args("id", { type: () => Int }) id: number) {
-    const deletedProxy = await this.proxyRepo.findOne(id);
+    const deletedProxy = await this.proxyRepo.findOne({ where: { id } });
     if (deletedProxy) {
-      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({ testedProxy: deletedProxy })
+      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({ testedProxy: deletedProxy } as FindOptionsWhere<ProxyTestRun>)
       deletedProxy.testsRuns = [];
       deletedProxy.updates = [];
       await this.proxyRepo.save(deletedProxy);
@@ -247,8 +247,9 @@ export class ProxyResolver {
   }
 
   @ResolveField()
-  async updates(@Parent() proxy: Proxy) {
-    const proxyWithUpdates = await this.proxyRepo.findOne(proxy.id, {
+  async updates(@Parent() { id }: Proxy) {
+    const proxyWithUpdates = await this.proxyRepo.findOne({
+      where: { id },
       relations: ["updates"],
     });
     return proxyWithUpdates.updates;
