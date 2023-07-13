@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, Unique, VirtualColumn } from "typeorm";
 import { ProxyTestRun, ProxyListUpdate, ProxySourcesView } from ".";
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 
@@ -19,14 +19,26 @@ export class Proxy {
     port: number
 
     @Field(type=>[ProxyListUpdate])
-    @ManyToMany(() => ProxyListUpdate, update => update.loadedProxies)
+    @ManyToMany(() => ProxyListUpdate, update => update.loadedProxies, { onDelete: 'CASCADE' })
     updates: ProxyListUpdate[]
 
     @Field(type=>[ProxyTestRun])
-    @OneToMany(() => ProxyTestRun, testRun => testRun.testedProxy)
+    @OneToMany(() => ProxyTestRun, testRun => testRun.testedProxy, { onDelete: 'CASCADE' })
     testsRuns: ProxyTestRun[]
 
     @OneToMany(() => ProxySourcesView, src => src.proxy)
     @Field(type => [ProxySourcesView])
     sources: ProxySourcesView[]
+
+
+    @VirtualColumn({
+        query: alias => `
+    SELECT TIMESTAMPDIFF (HOUR, plu.updateTime, NOW())
+    FROM proxy_list_update_loaded_proxies_proxy AS plu_pp
+    LEFT JOIN proxy_list_update as plu ON plu.id=plu_pp.proxyListUpdateId
+    WHERE plu_pp.proxyId=${alias}.id
+    ORDER BY plu.id DESC
+    LIMIT 1
+    `})
+    lastSeenOnSourcesHoursAgo: number
 }

@@ -31,7 +31,7 @@ export class ProxyTestRun {
 
   @Index('IX_testedProxyId')
   @Field((type) => Proxy)
-  @ManyToOne(() => Proxy, (proxy) => proxy.testsRuns)
+  @ManyToOne(() => Proxy, (proxy) => proxy.testsRuns, { onDelete: 'CASCADE' })
   testedProxy: Proxy;
 
   @Field((type) => GraphQLJSON, {nullable: true})

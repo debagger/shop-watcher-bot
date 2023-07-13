@@ -13,9 +13,9 @@ import {
   Mutation,
   Context,
 } from "@nestjs/graphql";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectRepository, InjectDataSource } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
-import { FindOptionsWhere, In, Repository } from "typeorm";
+import { DataSource, FindOptionsWhere, In, Repository, SelectQueryBuilder } from "typeorm";
 import {
   Proxy,
   ProxyListUpdate,
@@ -90,68 +90,55 @@ export class ProxyResolver {
     @InjectRepository(ProxySourcesView)
     private readonly proxySourcesViewRepo: Repository<ProxySourcesView>,
     @InjectRepository(ProxyTestRun)
-    private readonly proxyTestRunRepo: Repository<ProxyTestRun>
+    private readonly proxyTestRunRepo: Repository<ProxyTestRun>,
+    @InjectRepository(ProxyListUpdate)
+    private readonly proxyListUpdateRepo: Repository<ProxyListUpdate>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource
   ) { }
 
-  // set @from_t = DATE_SUB(sysdate(), INTERVAL 240 HOUR);
-  // SELECT p.*, testsCount, successTestsCount, (successTestsCount/testsCount) AS `rate` FROM `proxy` `p`
-  // LEFT JOIN (SELECT testedProxyId, COUNT(*) testsCount, SUM(IF (okResult is not null, 1, 0)) successTestsCount
-  //            FROM proxy_test_run
-  //            WHERE runTime >= @from_t
-  //            GROUP BY testedProxyId) t ON p.id=t.testedProxyId
-  // where successTestsCount is not null
-  // ORDER BY rate desc
-  // LIMIT 10
+  private buildTestCountsSubQuery(queryArgs: ProxyQueryArgs) {
+    return (q: SelectQueryBuilder<any>) => {
+      q = q
+        .select("testedProxyId").from(ProxyTestRun, 'ptr')
+        .addSelect("COUNT(*)", "testsCount")
+        .addSelect("SUM(IF (okResult is not null, 1, 0))", "successTestsCount")
+        .groupBy("testedProxyId");
+
+      if (queryArgs.proxyTestsHoursAgo) {
+        q = q.where("runTime >= DATE_SUB(:now, INTERVAL :hours HOUR)", {
+          hours: queryArgs.proxyTestsHoursAgo,
+        });
+      }
+      return q
+    }
+  }
+
+  private buildLastSourcesSubQuery() {
+    return (q: SelectQueryBuilder<any>) =>
+      q.select("proxyId")
+        .from(
+          (q) =>
+            q.select("proxyId")
+              .from(ProxySourcesView, "psv")
+              .leftJoin(ProxyListUpdate, "plu", "psv.lastUpdateId=plu.id")
+              .addSelect("MAX(plu.updateTime)", "lastSeen")
+              .groupBy("psv.proxyId"),
+          "t"
+      )
+        .addSelect("TIMESTAMPDIFF(HOUR, t.lastSeen, :now)", "lastSeenOnSourcesHoursAgo")
+  }
 
   private buildQuery(queryArgs: ProxyQueryArgs) {
     let query = this.proxyRepo
       .createQueryBuilder("p")
       .setParameter("now", new Date())
-      .select("p.*");
-    query = query
-      .leftJoin(
-        (q) => {
-          let res = q
-            .select("testedProxyId")
-            .addSelect(
-              "COUNT(*) testsCount, SUM(IF (okResult is not null, 1, 0)) successTestsCount"
-            )
-            .disableEscaping()
-            .from(ProxyTestRun, "ignore index(IX_testedProxyId)");
-          if (queryArgs.proxyTestsHoursAgo) {
-            res = res.where("runTime >= DATE_SUB(:now, INTERVAL :hours HOUR)", {
-              hours: queryArgs.proxyTestsHoursAgo,
-            });
-          }
-          res = res.groupBy("testedProxyId");
-          return res;
-        },
-        "t",
-        "p.id=t.testedProxyId"
-      )
+      .leftJoin(this.buildTestCountsSubQuery(queryArgs), "t", "p.id=t.testedProxyId")
       .addSelect("(successTestsCount/testsCount)", "successTestRate")
-      .addSelect("testsCount, successTestsCount");
-
-    query = query
-      .leftJoin(
-        (q) =>
-          q
-            .select(
-              "t.proxyId, HOUR(TIMEDIFF(:now, t.lastSeen)) lastSeenOnSourcesHoursAgo"
-            )
-            .from(
-              (q) =>
-                q
-                  .select("psv.proxyId, MAX(plu.updateTime) lastSeen")
-                  .from(ProxySourcesView, "psv")
-                  .leftJoin(ProxyListUpdate, "plu", "psv.lastUpdateId=plu.id")
-                  .groupBy("psv.proxyId"),
-              "t"
-            ),
-        "ls",
-        "p.id = ls.proxyId"
-      )
-      .addSelect("lastSeenOnSourcesHoursAgo");
+      .addSelect("testsCount")
+      .addSelect("successTestsCount")
+    // .leftJoin(this.buildLastSourcesSubQuery(), "ls", "p.id = ls.proxyId")
+    // .addSelect("lastSeenOnSourcesHoursAgo");
 
     if (typeof queryArgs.hasNoTests === "boolean")
       query = query.andWhere(
@@ -165,28 +152,26 @@ export class ProxyResolver {
 
     if (queryArgs.sortBy) {
       query = query.orderBy(
-        queryArgs.sortBy,
+        queryArgs.sortBy === 'lastSeenOnSourcesHoursAgo' ? 'p_lastSeenOnSourcesHoursAgo' : queryArgs.sortBy,
         queryArgs.descending ? "DESC" : "ASC"
       );
       if (queryArgs.sortBy !== ProxyQuerySortEnum.id) {
-        query = query.addOrderBy("id", queryArgs.descending ? "DESC" : "ASC");
+        query = query.addOrderBy("p.id", queryArgs.descending ? "DESC" : "ASC");
       }
     }
-    query
-    return query;
+    return query.select();
   }
 
   @Query((returns) => [Proxy])
   async proxies(@Args() queryOptions: ProxiesQueryArgs) {
     const { take, skip } = queryOptions;
     const query = this.buildQuery(queryOptions).offset(skip).limit(take);
-    console.log(query.getSql());
     const raw = await query.getRawMany();
     return raw;
   }
 
   @Query((returns) => PaginatedProxy)
-  async proxiesPage(@Args() queryOptions: PaginatedProxiesQueryArgs, @Context() ctx: any) {
+  async proxiesPage(@Args() queryOptions: PaginatedProxiesQueryArgs) {
     const { page, rowsPerPage } = queryOptions;
     const skip = (page - 1) * rowsPerPage;
     const take = rowsPerPage;
@@ -200,13 +185,27 @@ export class ProxyResolver {
       rowsNumber: await query.getCount(),
     };
 
-    const pageQuery = query.offset(skip).limit(take);
-    const queryResult = await pageQuery.getRawMany();
-    result.rows = queryResult
-    ctx.data.sources = await this.proxySourcesViewRepo.find({
-      where: { proxyId: In([queryResult.map(i => i.id)]) },
-      relations: ["source", "firstUpdate", "lastUpdate"],
-    })
+    const proxyList = await query.clone().offset(skip).limit(take).getRawMany()
+
+    const pageQuery = this.proxyRepo.createQueryBuilder("p")
+      .select('p.id')
+      .addSelect('p.host')
+      .addSelect('p.port')
+      .where(`p.id IN (${proxyList.map(i => i.p_id).join(",")})`)
+      .leftJoinAndSelect('p.sources', 'psv')
+      .leftJoinAndSelect("psv.source", 'psv_src')
+      .leftJoinAndSelect("psv.firstUpdate", 'psv_fu')
+      .leftJoinAndSelect("psv.lastUpdate", 'psv_lu')
+
+
+    const queryResult = await pageQuery.getMany();
+
+    const detailedProxysMap = new Map(queryResult.map(proxy => [proxy.id, proxy]))
+
+    result.rows = proxyList.map(i => ({
+      ...i,
+      ...detailedProxysMap.get(i.p_id)
+    }))
     return result;
   }
 
@@ -222,28 +221,14 @@ export class ProxyResolver {
 
   @Mutation((returns) => GraphQLJSON)
   async deleteProxy(@Args("id", { type: () => Int }) id: number) {
-    const deletedProxy = await this.proxyRepo.findOne({ where: { id } });
-    if (deletedProxy) {
-      const proxyTestRunDeletionResult = await this.proxyTestRunRepo.delete({ testedProxy: deletedProxy } as FindOptionsWhere<ProxyTestRun>)
-      deletedProxy.testsRuns = [];
-      deletedProxy.updates = [];
-      await this.proxyRepo.save(deletedProxy);
-      const proxyResult = await this.proxyRepo.remove(deletedProxy);
-      return { proxy: deletedProxy, proxyTestRunDeletionResult };
-    } else {
-      throw new Error(`Proxy id:${id} not found.`);
-    }
+    const deletedProxy = await this.proxyRepo.delete({ id })
+    return { proxy: deletedProxy };
   }
 
   @ResolveField((returns) => [ProxySourcesView])
-  async sources(@Parent() proxy: Proxy, @Context() ctx: any) {
-    const res = ctx.data.sources.filter(i => i.proxyId === proxy.id)
+  async sources(@Parent() proxy: Proxy) {
+    const res = proxy.sources
     return res;
-  }
-
-  @ResolveField((returns) => Float, { nullable: true })
-  lastSeenOnSourcesHoursAgo(@Parent() proxy: Proxy) {
-    return proxy["lastSeenOnSourcesHoursAgo"];
   }
 
   @ResolveField()
@@ -253,6 +238,11 @@ export class ProxyResolver {
       relations: ["updates"],
     });
     return proxyWithUpdates.updates;
+  }
+
+  @ResolveField((returns) => Float, { nullable: true })
+  lastSeenOnSourcesHoursAgo(@Parent() proxy: Proxy) {
+    return proxy["p_lastSeenOnSourcesHoursAgo"];
   }
 
   @ResolveField((returns) => Int, { nullable: true })
