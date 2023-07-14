@@ -11,6 +11,7 @@ import { Field, Int, ObjectType } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-scalars";
 @ObjectType()
 @Entity()
+@Index(['testedProxy', 'isOk'])
 export class ProxyTestRun {
   @Field((type) => Int)
   @PrimaryGeneratedColumn()
@@ -29,7 +30,7 @@ export class ProxyTestRun {
   @ManyToOne(() => ProxyTestType, (testType) => testType.testRuns)
   testType: ProxyTestType;
 
-  @Index('IX_testedProxyId')
+  @Index('testedProxyId')
   @Field((type) => Proxy)
   @ManyToOne(() => Proxy, (proxy) => proxy.testsRuns, { onDelete: 'CASCADE' })
   testedProxy: Proxy;
@@ -45,4 +46,8 @@ export class ProxyTestRun {
   @Field()
   @Column({ type: "int" })
   duration_ms: number;
+
+
+  @Column({ generatedType: "STORED", asExpression: 'okResult is not null', type: "boolean" })
+  isOk: boolean
 }

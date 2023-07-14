@@ -102,7 +102,7 @@ export class ProxyResolver {
       q = q
         .select("testedProxyId").from(ProxyTestRun, 'ptr')
         .addSelect("COUNT(*)", "testsCount")
-        .addSelect("SUM(IF (okResult is not null, 1, 0))", "successTestsCount")
+        .addSelect("SUM(ptr.isOk)", "successTestsCount")
         .groupBy("testedProxyId");
 
       if (queryArgs.proxyTestsHoursAgo) {
