@@ -37,7 +37,7 @@ export class Proxy {
     FROM proxy_list_update_loaded_proxies_proxy AS plu_pp
     LEFT JOIN proxy_list_update as plu ON plu.id=plu_pp.proxyListUpdateId
     WHERE plu_pp.proxyId=${alias}.id
-    ORDER BY plu.id DESC
+    ORDER BY plu_pp.proxyListUpdateId DESC
     LIMIT 1
     `})
     lastSeenOnSourcesHoursAgo: number
