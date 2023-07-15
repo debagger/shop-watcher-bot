@@ -12,6 +12,7 @@ import { GraphQLJSON } from "graphql-scalars";
 @ObjectType()
 @Entity()
 @Index(['testedProxy', 'isOk'])
+  @Index(['testedProxy', 'runTime', 'isOk'])
 export class ProxyTestRun {
   @Field((type) => Int)
   @PrimaryGeneratedColumn()

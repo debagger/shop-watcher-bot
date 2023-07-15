@@ -40,5 +40,5 @@ export class Proxy {
     ORDER BY plu_pp.proxyListUpdateId DESC
     LIMIT 1
     `})
-    lastSeenOnSourcesHoursAgo: number
+    readonly lastSeenOnSourcesHoursAgo: number
 }
