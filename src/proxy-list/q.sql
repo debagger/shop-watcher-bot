@@ -6,14 +6,14 @@ SELECT
     `p`.`port` AS `p_port`,
     (
         SELECT
-            TIMESTAMPDIFF (HOUR, plu.updateTime, NOW ())
+            TIMESTAMPDIFF(HOUR, plu.updateTime, NOW())
         FROM
             proxy_list_update_loaded_proxies_proxy AS plu_pp
             LEFT JOIN proxy_list_update as plu ON plu.id = plu_pp.proxyListUpdateId
         WHERE
             plu_pp.proxyId = `p`.id
         ORDER BY
-            plu.id DESC
+            plu_pp.proxyListUpdateId DESC
         LIMIT
             1
     ) AS `p_lastSeenOnSourcesHoursAgo`,
@@ -29,11 +29,16 @@ FROM
             SUM(`ptr`.`isOk`) AS `successTestsCount`
         FROM
             `proxy_test_run` `ptr`
+        WHERE
+            runTime >= DATE_SUB(?, INTERVAL ? HOUR)
         GROUP BY
             testedProxyId
     ) `t` ON `p`.`id` = t.testedProxyId
+WHERE
+    successTestsCount = 0
 ORDER BY
-    id DESC
+    p_lastSeenOnSourcesHoursAgo DESC,
+    `p`.`id` DESC
 
 SELECT
     TIMESTAMPDIFF (HOUR, t.lastSeen, NOW ())
