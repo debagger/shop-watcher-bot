@@ -13,12 +13,11 @@ import {
   Mutation,
   Context,
 } from "@nestjs/graphql";
-import { InjectRepository, InjectDataSource } from "@nestjs/typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
 import { Paginated } from "../tools.graphql";
-import { DataSource, FindOptionsWhere, In, Repository, SelectQueryBuilder } from "typeorm";
+import { Repository, SelectQueryBuilder } from "typeorm";
 import {
   Proxy,
-  ProxyListUpdate,
   ProxySourcesView,
   ProxyTestRun,
 } from "../entities";
@@ -87,17 +86,11 @@ class PaginatedProxy extends Paginated<Proxy> {
 export class ProxyResolver {
   constructor(
     @InjectRepository(Proxy) private readonly proxyRepo: Repository<Proxy>,
-    @InjectRepository(ProxySourcesView)
-    private readonly proxySourcesViewRepo: Repository<ProxySourcesView>,
     @InjectRepository(ProxyTestRun)
     private readonly proxyTestRunRepo: Repository<ProxyTestRun>,
-    @InjectRepository(ProxyListUpdate)
-    private readonly proxyListUpdateRepo: Repository<ProxyListUpdate>,
-    @InjectDataSource()
-    private readonly dataSource: DataSource
   ) { }
 
-  private buildTestCountsSubQuery(queryArgs: ProxyQueryArgs) {
+  private buildTestCountsSubQuery({ proxyTestsHoursAgo }: ProxyQueryArgs) {
     return (q: SelectQueryBuilder<any>) => {
       q = q
         .select("testedProxyId").from(ProxyTestRun, 'ptr')
@@ -105,28 +98,13 @@ export class ProxyResolver {
         .addSelect("SUM(ptr.isOk)", "successTestsCount")
         .groupBy("testedProxyId");
 
-      if (queryArgs.proxyTestsHoursAgo) {
-        q = q.where("runTime >= DATE_SUB(:now, INTERVAL :hours HOUR)", {
-          hours: queryArgs.proxyTestsHoursAgo,
+      if (proxyTestsHoursAgo) {
+        q = q.where("runTime >= DATE_SUB(:now, INTERVAL :proxyTestsHoursAgo HOUR)", {
+          proxyTestsHoursAgo,
         });
       }
       return q
     }
-  }
-
-  private buildLastSourcesSubQuery() {
-    return (q: SelectQueryBuilder<any>) =>
-      q.select("proxyId")
-        .from(
-          (q) =>
-            q.select("proxyId")
-              .from(ProxySourcesView, "psv")
-              .leftJoin(ProxyListUpdate, "plu", "psv.lastUpdateId=plu.id")
-              .addSelect("MAX(plu.updateTime)", "lastSeen")
-              .groupBy("psv.proxyId"),
-          "t"
-      )
-        .addSelect("TIMESTAMPDIFF(HOUR, t.lastSeen, :now)", "lastSeenOnSourcesHoursAgo")
   }
 
   private buildQuery(queryArgs: ProxyQueryArgs) {
@@ -137,8 +115,6 @@ export class ProxyResolver {
       .addSelect("(successTestsCount/testsCount)", "successTestRate")
       .addSelect("testsCount")
       .addSelect("successTestsCount")
-    // .leftJoin(this.buildLastSourcesSubQuery(), "ls", "p.id = ls.proxyId")
-    // .addSelect("lastSeenOnSourcesHoursAgo");
 
     if (typeof queryArgs.hasNoTests === "boolean")
       query = query.andWhere(
