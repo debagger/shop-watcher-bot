@@ -117,6 +117,7 @@ export type ProxySourcesView = {
   __typename?: 'ProxySourcesView';
   firstUpdate: ProxyListUpdate;
   lastUpdate: ProxyListUpdate;
+  proxy: Proxy;
   source: ProxyListSource;
 };
 
@@ -258,7 +259,7 @@ export type TelegramChatUserDialogsArgs = {
 
 export type WorkerResult = {
   __typename?: 'WorkerResult';
-  result: ProxyTestRun;
+  result?: Maybe<ProxyTestRun>;
   workerId: Scalars['Int']['output'];
 };
 
@@ -288,7 +289,7 @@ export type ProxyTesterWorkerStateQuery = { __typename?: 'Query', proxyTesterWor
 export type WorkerTaskFinishSubscriptionVariables = Exact<{ [key: string]: never; }>;
 
 
-export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result: { __typename?: 'ProxyTestRun', okResult?: any | null, errorResult?: any | null, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } } };
+export type WorkerTaskFinishSubscription = { __typename?: 'Subscription', onTaskFinish: { __typename?: 'WorkerResult', workerId: number, result?: { __typename?: 'ProxyTestRun', okResult?: any | null, errorResult?: any | null, runTime: any, duration_ms: number, protocol: number, id: number, testType: { __typename?: 'ProxyTestType', name: string }, testedProxy: { __typename?: 'Proxy', id: number, host: string, port: number } } | null } };
 
 export type ProxyListSourcesWithLastUpdateQueryVariables = Exact<{ [key: string]: never; }>;
 

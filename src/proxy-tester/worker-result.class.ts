@@ -11,6 +11,6 @@ export class WorkerResult {
   @Field(type => Int)
   workerId: number;
 
-  @Field(type => ProxyTestRun)
-  result: ProxyTestRun;
+  @Field(type => ProxyTestRun, { nullable: true })
+  result?: ProxyTestRun;
 }
