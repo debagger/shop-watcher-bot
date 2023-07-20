@@ -1,6 +1,6 @@
 <template>
-    <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" v-model:pagination="pagination"
-        @request="onRequest" selection="multiple" :selected="selected" @update:selected="s => $emit('update:selected', s)"
+    <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" :pagination="pagination" @request="onRequest"
+        selection="multiple" :selected="selected" @update:selected="s => $emit('update:selected', s)"
         :selected-rows-label="getSelectedString(selected)" :rows-per-page-options="[10, 20, 50, 100, 250, 500]">
         <template v-slot:body-cell-sources="props">
             <q-td :props="props">

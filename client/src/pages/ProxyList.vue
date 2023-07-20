@@ -6,32 +6,32 @@
       </q-card-section>
 
       <q-separator />
-          <proxy-list-filters v-model:variables="variables" />
-          <q-separator />
-          <q-card-section>
-            <div class="text-h6">Actions</div>
-          </q-card-section>
-          <q-separator />
-          <q-card-section>
-            <q-btn @click="deleteSelectedProxies">Delete({{ selected.length }})</q-btn>
-          </q-card-section>
-        </q-card>
+      <proxy-list-filters />
+      <q-separator />
+      <q-card-section>
+        <div class="text-h6">Actions</div>
+      </q-card-section>
+      <q-separator />
+      <q-card-section>
+        <q-btn @click="deleteSelectedProxies">Delete({{ selected.length }})</q-btn>
+      </q-card-section>
+    </q-card>
 
-        <proxy-list-table :rows="rows" :total-rows-number="totalRowsNumber" v-model:selected="selected" :loading="loading" />
+    <proxy-list-table :rows="rows" :total-rows-number="totalRowsNumber" v-model:selected="selected" :loading="loading" />
 
-        <q-dialog persistent v-model="proxyDeletionProgress.show">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6">Proxy deletion progress</div>
-            </q-card-section>
+    <q-dialog persistent v-model="proxyDeletionProgress.show">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">Proxy deletion progress</div>
+        </q-card-section>
 
-            <q-card-section class="q-pt-none">
-              <q-linear-progress :value="proxyDeletionProgress.progress"></q-linear-progress>
-              {{ proxyDeletionProgress.message }}
-            </q-card-section>
-          </q-card>
-        </q-dialog>
-      </q-page>
+        <q-card-section class="q-pt-none">
+          <q-linear-progress :value="proxyDeletionProgress.progress"></q-linear-progress>
+          {{ proxyDeletionProgress.message }}
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+  </q-page>
 </template>
 
 <script lang="ts">
