@@ -1,42 +1,42 @@
 <template>
-    <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" :pagination="pagination" @request="onRequest"
-        selection="multiple" :selected="selected" @update:selected="s => $emit('update:selected', s)"
-        :selected-rows-label="getSelectedString(selected)" :rows-per-page-options="[10, 20, 50, 100, 250, 500]">
-        <template v-slot:body-cell-sources="props">
-            <q-td :props="props">
-                <q-list dense>
-                    <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
-                        <q-item-section>
-                            <q-item-label overline>{{ sourceItem.source.name.toUpperCase() }}
-                            </q-item-label>
-                            <q-item-label>
-                                <q-badge>{{
-                                    date.formatDate(
-                                        sourceItem.firstUpdate.updateTime,
-                                        'YYYY-MM-DD HH:mm:ss'
-                                    )
-                                }}</q-badge>-<q-badge>{{
+                        <q-table class="col-10" :columns="columns" :rows="rows" :loading="loading" v-model:pagination="pagination"
+                            @request="onRequest" selection="multiple" :selected="selected" @update:selected="s => $emit('update:selected', s)"
+                        :selected-rows-label="getSelectedString(selected)" :rows-per-page-options="[10, 20, 50, 100, 250, 500]">
+                        <template v-slot:body-cell-sources="props">
+                            <q-td :props="props">
+                                <q-list dense>
+                                    <q-item v-for="sourceItem in props.row.sources" :key="sourceItem">
+                                        <q-item-section>
+                                            <q-item-label overline>{{ sourceItem.source.name.toUpperCase() }}
+                                            </q-item-label>
+                                            <q-item-label>
+                                                <q-badge>{{
+                                                    date.formatDate(
+                                                        sourceItem.firstUpdate.updateTime,
+                                                        'YYYY-MM-DD HH:mm:ss'
+                                                    )
+                                                }}</q-badge>-<q-badge>{{
     date.formatDate(
         sourceItem.lastUpdate.updateTime,
         'YYYY-MM-DD HH:mm:ss'
     )
 }}</q-badge>
-                            </q-item-label>
-                        </q-item-section>
-                    </q-item>
-                </q-list>
-            </q-td>
-        </template>
+                                            </q-item-label>
+                                        </q-item-section>
+                                    </q-item>
+                                </q-list>
+                            </q-td>
+                        </template>
 
-        <template v-slot:body-cell-tests="props">
-            <q-td :props="props">
-                <q-linear-progress v-if="props.row.successTestRate" :value="props.row.successTestRate" />
-            </q-td>
-        </template>
-    </q-table>
+                        <template v-slot:body-cell-tests="props">
+                            <q-td :props="props">
+                                <q-linear-progress v-if="props.row.successTestRate" :value="props.row.successTestRate" />
+                            </q-td>
+                        </template>
+                    </q-table>
 </template>
 <script lang="ts">
-import { computed, defineComponent, toValue, PropType } from 'vue'
+import { defineComponent, PropType, ref, watch } from 'vue'
 import { date, QTable, QTableProps } from 'quasar';
 import { useProxyListPageRouteQuery } from './ProxyListPageDefaults'
 import { GetProxiesPageQuery, Proxy } from './../../graphql';
@@ -72,11 +72,10 @@ export default defineComponent({
 
         const routeQueryData = useProxyListPageRouteQuery()
 
-        const pagination = computed(() => ({
-            page: toValue(routeQueryData.page),
-            rowsPerPage: toValue(routeQueryData.rowsPerPage),
-            rowsNumber: props.totalRowsNumber
-        }));
+        const pagination = ref<QTableProps['pagination']>()
+
+        watch([routeQueryData.page, routeQueryData.rowsPerPage, () => props.totalRowsNumber],
+            ([page, rowsPerPage, rowsNumber]: any) => pagination.value = { page, rowsPerPage, rowsNumber })
 
         function getSelectedString(selected: Proxy[] | undefined) {
 
